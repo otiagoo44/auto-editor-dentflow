@@ -1,0 +1,191 @@
+{
+  "created": "2026-09-28",
+  "objective": "Datos visuales verificables, no inferencias desde captions",
+  "watch_install": "La skill fue instalada por el usuario en SU Codex; no se comparte automáticamente con ChatGPT. Debe comprobarse en la sesión local de Codex.",
+  "provenance": "Ocho nuevas URL de Instagram derivan de extracción previa de Apify, distintas de la primera selección. Dos materiales de Tomi proceden de fuentes públicas identificadas; segundo puede ser inaccesible.",
+  "video_tutorials": [
+    {
+      "id": "T01",
+      "creator": "HillierSmith",
+      "title": "How to Edit Videos Like an Artist, Not a Technician",
+      "url": "https://www.youtube.com/watch?v=XIVSa3wo0JU",
+      "learning_goal": "Guión y emoción antes que efectos; pausas útiles; montaje sin adornos.",
+      "status": "CURATED_LINK_NOT_WATCHED"
+    },
+    {
+      "id": "T02",
+      "creator": "HillierSmith",
+      "title": "How to Avoid Five Common YouTube Editing Mistakes",
+      "url": "https://www.youtube.com/watch?v=QR8LxximqWI",
+      "learning_goal": "Jump cuts limpios, cortes motivados, prioridad a montaje completo.",
+      "status": "CURATED_LINK_NOT_WATCHED"
+    },
+    {
+      "id": "T03",
+      "creator": "Tim Runia",
+      "title": "How to Edit Videos Into Stories With Better Flow",
+      "url": "https://www.youtube.com/watch?v=dhpazqW_OaU",
+      "learning_goal": "Ensambla la historia y el audio antes de pulir; variación de ritmo.",
+      "status": "CURATED_LINK_NOT_WATCHED"
+    },
+    {
+      "id": "T04",
+      "creator": "Think Media",
+      "title": "How to Edit A Video in DaVinci Resolve! (Start to Finish)",
+      "url": "https://www.youtube.com/watch?v=LcGsaIV8QBY",
+      "learning_goal": "A-roll, B-roll, secuenciación y mezcla de audio.",
+      "status": "CURATED_LINK_NOT_WATCHED"
+    },
+    {
+      "id": "T05",
+      "creator": "Think Media",
+      "title": "How to Edit Shorts & Reels in DaVinci Resolve (Start to Finish)",
+      "url": "https://www.youtube.com/watch?v=ReYsGTwHHcw",
+      "learning_goal": "Composición 9:16, reencuadre, cortes y superposición de apoyo.",
+      "status": "CURATED_LINK_NOT_WATCHED"
+    },
+    {
+      "id": "T06",
+      "creator": "Ben Marriott",
+      "title": "Essential Motion Graphics for Youtube",
+      "url": "https://www.youtube.com/watch?v=HH0VBOyht0E",
+      "learning_goal": "Motion graphics explicativos discretos, elementos reutilizables.",
+      "status": "CURATED_LINK_NOT_WATCHED"
+    },
+    {
+      "id": "T07",
+      "creator": "Ben Marriott",
+      "title": "After Effects Smooth Transitions - Animation Tutorial pt. 1",
+      "url": "https://www.youtube.com/watch?v=UVDpgP7sRbw",
+      "learning_goal": "Curvas de velocidad, easing, cuándo transición compleja sí/no.",
+      "status": "CURATED_LINK_NOT_WATCHED"
+    },
+    {
+      "id": "T08",
+      "creator": "Motion Mirror",
+      "title": "After Effects UI Animation Tutorial | Motion Graphics",
+      "url": "https://www.youtube.com/watch?v=hu06BPmKf2s",
+      "learning_goal": "Aislar interfaz, máscaras, foco de cámara, mockups para SaaS.",
+      "status": "CURATED_LINK_NOT_WATCHED"
+    },
+    {
+      "id": "T09",
+      "creator": "TomsProject",
+      "title": "Master SaaS Motion Graphics in 30 Minutes (After Effects)",
+      "url": "https://www.youtube.com/watch?v=Jccbzpicst8",
+      "learning_goal": "Explicaciones UI, tarjetas, motion blur, jerarquía de información.",
+      "status": "CURATED_LINK_NOT_WATCHED"
+    },
+    {
+      "id": "T10",
+      "creator": "Ben Marriott",
+      "title": "I’ll Teach You After Effects in 60 Minutes",
+      "url": "https://www.youtube.com/watch?v=jFbRZZmMW7c",
+      "learning_goal": "Keyframes, scale, masks, easing; traducir conceptos al motor programático.",
+      "status": "CURATED_LINK_NOT_WATCHED"
+    }
+  ],
+  "creators_additional": [
+    {
+      "id": "R01",
+      "creator": "Nik Setting",
+      "url": "https://www.instagram.com/p/DdmaEGJgp9M/",
+      "published": "2026-09-22",
+      "duration_s": 79.11,
+      "learning_goal": "Una grabación sin caption capturado: examinar recursos visuales con cuidado.",
+      "provenance": "Apify extraído previamente",
+      "status": "VISUAL_INSPECTION_PENDING"
+    },
+    {
+      "id": "R02",
+      "creator": "Nik Setting",
+      "url": "https://www.instagram.com/p/DdmabEwgFl-/",
+      "published": "2026-09-22",
+      "duration_s": 57.52,
+      "learning_goal": "Comparar otra duración y ritmo del mismo autor.",
+      "provenance": "Apify extraído previamente",
+      "status": "VISUAL_INSPECTION_PENDING"
+    },
+    {
+      "id": "R03",
+      "creator": "Alex Hormozi",
+      "url": "https://www.instagram.com/p/DdzUCVmBf2f/",
+      "published": "2026-09-27",
+      "duration_s": 100.4,
+      "learning_goal": "Edición de discurso argumentativo más largo.",
+      "provenance": "Apify extraído previamente; @hormozi verificado",
+      "status": "VISUAL_INSPECTION_PENDING"
+    },
+    {
+      "id": "R04",
+      "creator": "Alex Hormozi",
+      "url": "https://www.instagram.com/p/DdzXUhQhRZH/",
+      "published": "2026-09-27",
+      "duration_s": 81.45,
+      "learning_goal": "Contenido sobre AI y cambios persistentes; observar apoyos visuales reales.",
+      "provenance": "Apify extraído previamente; @hormozi verificado",
+      "status": "VISUAL_INSPECTION_PENDING"
+    },
+    {
+      "id": "R05",
+      "creator": "Ramiro Cubría",
+      "url": "https://www.instagram.com/p/DdxoP4PT1Fl/",
+      "published": "2026-09-27",
+      "duration_s": 81.28,
+      "learning_goal": "CTA de comentar y progresión visual de la explicación.",
+      "provenance": "Apify extraído previamente",
+      "status": "VISUAL_INSPECTION_PENDING"
+    },
+    {
+      "id": "R06",
+      "creator": "Ramiro Cubría",
+      "url": "https://www.instagram.com/p/DdwXEupTZuI/",
+      "published": "2026-09-26",
+      "duration_s": 115.87,
+      "learning_goal": "Serie parte II; ritmo de desarrollo largo.",
+      "provenance": "Apify extraído previamente",
+      "status": "VISUAL_INSPECTION_PENDING"
+    },
+    {
+      "id": "R07",
+      "creator": "Marcos Razzetti",
+      "url": "https://www.instagram.com/p/Dd0Q7aNNLxs/",
+      "published": "2026-09-28",
+      "duration_s": 32.88,
+      "learning_goal": "Video corto con postura verbal directa.",
+      "provenance": "Apify extraído previamente",
+      "status": "VISUAL_INSPECTION_PENDING"
+    },
+    {
+      "id": "R08",
+      "creator": "Marcos Razzetti",
+      "url": "https://www.instagram.com/p/Ddwbf0olAiR/",
+      "published": "2026-09-26",
+      "duration_s": 149.33,
+      "learning_goal": "Video largo con CTA de checklist; comparar ritmo.",
+      "provenance": "Apify extraído previamente",
+      "status": "VISUAL_INSPECTION_PENDING"
+    },
+    {
+      "id": "R09",
+      "creator": "Tomi Buschiazzo",
+      "url": "https://www.youtube.com/watch?v=_apNIqr5VZE",
+      "published": null,
+      "duration_s": null,
+      "learning_goal": "Entrevista/relato largo. Analizar fragmentos de intro, prueba y desenlace, NO confundir con Reel.",
+      "provenance": "URL verificada por índice con descripción que se identifica como su video",
+      "status": "VISUAL_INSPECTION_PENDING"
+    },
+    {
+      "id": "R10",
+      "creator": "Tomi Buschiazzo",
+      "url": "https://www.tomibuschiazzo.com/pr",
+      "published": null,
+      "duration_s": null,
+      "learning_goal": "VSL en página propia; verificar que hay video accesible y analizar sólo si Watch puede abrir el medio. Si no, buscar un Reel exacto del perfil enlazado por su video de YouTube @tomiibuschiazzo. NO inventar URL.",
+      "provenance": "Página propia, video concreto no verificado técnicamente",
+      "status": "VISUAL_INSPECTION_PENDING"
+    }
+  ],
+  "important": "Watch local = sampling temporal de fotogramas + transcripción; puede pasar por alto microcortes o movimientos sutiles. Usar extracciones puntuales y pruebas independientes cuando se atribuyen efectos."
+}

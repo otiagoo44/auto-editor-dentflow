@@ -1,0 +1,32 @@
+# Reglas iniciales ajustables; no son fórmulas de retención.
+video:
+  width: 1080
+  height: 1920
+  fps: 30
+  fit: contain
+  crf: 20
+  preset: veryfast
+  threads: 2
+audio:
+  normalize: true
+  target_lufs: -16
+transcription:
+  enabled: true
+  model: base
+  offline: true
+  language: es
+  threads: 2
+cuts:
+  # Sólo sugerencias. Aprobar usando keep_segments en edicion.json.
+  gap_to_suggest_seconds: 1.2
+  keep_before_seconds: 0.20
+  keep_after_seconds: 0.30
+subtitles:
+  enabled: true
+  font: Arial
+  font_size: 58
+  margin_v: 260
+  max_chars_per_line: 26
+  phrase_gap_seconds: 0.55
+  max_duration_seconds: 4.0
+  warn_chars_per_second: 22

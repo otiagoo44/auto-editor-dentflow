@@ -1,0 +1,32 @@
+{
+  "pipeline.png": {
+    "keywords": [
+      "pipeline",
+      "seguimiento",
+      "consulta",
+      "estado",
+      "responsable",
+      "próxima acción"
+    ],
+    "priority": 10
+  },
+  "consultas_abiertas.png": {
+    "keywords": [
+      "consultas abiertas",
+      "implantes",
+      "abiertas",
+      "sin responder"
+    ],
+    "priority": 10
+  },
+  "dashboard.png": {
+    "keywords": [
+      "dashboard",
+      "panel",
+      "métricas",
+      "control",
+      "dirección"
+    ],
+    "priority": 8
+  }
+}

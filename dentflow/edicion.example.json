@@ -1,0 +1,24 @@
+{
+  "source": "raw.mp4",
+  "events": [
+    {
+      "type": "asset",
+      "file": "../Assets/demo-propia.mp4",
+      "approved": true,
+      "start": 8,
+      "end": 13,
+      "offset": 0,
+      "layout": "full",
+      "reason": "Mostrar cómo cambia de pendiente a confirmado al explicar ese paso"
+    },
+    {
+      "type": "reframe",
+      "start": 16,
+      "end": 19,
+      "scale": 1.08,
+      "x": 0.5,
+      "y": 0.4,
+      "reason": "Destacar una conclusión; revisar que el recorte conserve ojos y manos"
+    }
+  ]
+}
