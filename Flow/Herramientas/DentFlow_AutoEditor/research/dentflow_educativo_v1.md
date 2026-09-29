@@ -1,5 +1,12 @@
 # DentFlow educativo v1 — guía audiovisual original
 
+Actualización V2, 29-09-2026: se conserva esta guía como procedencia editorial.
+El motor actual ya permite punch animado opcional, foco por regiones, títulos
+discretos y frases de entrada/salida de gráficos; contrato y comandos vigentes
+en [README](../../../../README.md). La primera prueba sintética mostró que pasos
+de duración fija adelantaban la imagen a la voz: el plan R1 ahora usa un trigger
+por campo. Valores históricos de V1 abajo no sustituyen la configuración real.
+
 Esta guía convierte evidencia parcial en decisiones configurables. Es una propuesta editorial para un fundador que explica sistemas a dueños de clínicas; no es un estilo de ningún referente ni una fórmula de retención. Las referencias respaldan funciones concretas del montaje, no los valores numéricos iniciales de abajo.
 
 ## Unidad narrativa

@@ -1,126 +1,233 @@
 # DentFlow AutoEditor V2 local
 
-## Checkpoint B — borrador automático
+Coloca `raw.mp4` en una carpeta Reel y ejecuta un BAT. Produce un borrador vertical
+con voz, subtítulos y un plan auditable. El modo editorial añade sólo imágenes
+propias declaradas y enlazadas a frases. Sin API, música automática, publicación,
+Watch en runtime ni suscripciones por render. **No validado para producción con
+dos grabaciones reales**: todavía no existen R1/R2 del iPhone en este checkout.
 
-`--auto` ya produce `Reel/OUTPUT/VIDEO_BORRADOR.mp4`. Sólo reemplaza esa copia
-tras verificar duración, H.264/AAC 48 kHz, resolución y decodificación completa;
-preserva los renders con timestamp. `--preview` genera 360×640 (también actualiza
-el borrador); sin esa opción genera 1080×1920. El modo auto requiere final de
-frase, pausa larga y silencio medido para cortar; protege eventos explícitos,
-conserva inicio/final y no supera 25% eliminado. No garantiza conservar gestos.
-`--no-auto-cuts` desactiva esos cortes; `keep_segments` explícito tiene prioridad.
-Sin audio audible o ante fallo ASR conserva cámara limpia y avisa, sin inventar
-texto. Cada corrida entrega plan, transcript, ASS, warnings y render_log.
+## Empezar en esta PC
 
-Pruebas ejecutadas: 11/11 (6.25 s); ASR activada sin pista, baseline auto de 12 s,
-fallo ASR, protección de demo y de la última salida ante fallo de render.
-Borrador sintético persistido en `%LOCALAPPDATA%\DentFlow\validacion_v2\Reel 1\OUTPUT\VIDEO_BORRADOR.mp4`.
-Es patrón de prueba sin voz, no una grabación tuya ni validación profesional.
-
-## Estado de preparación — 29-09-2026, checkpoint A
-
-HEAD recibido `e03cafbfd1cc403c124f1bf8ea9e2ef172064098`, posterior a `7082841`:
-el proyecto fue movido de `dentflow/` a esta raíz; no hay segundo editor.
-Repositorio limpio, fetch y pull fast-forward sin cambios. En esta PC se instalaron
-uv 0.12.20, Python 3.12.14, FFmpeg/ffprobe 9.0.2 y faster-whisper 1.1.1.
-Referencia antes de modificar el motor: 7/7 tests pasaron (3.89 s), cuatro renders.
-Primer intento falló por falta de PyYAML; segundo por PATH de FFmpeg sin refrescar.
-Modelo base descargado y smoke de 8 s de voz real R01 transcrito con
-`local_files_only=True`; no es validación de voz iPhone ni español propio.
-`install.bat` ahora instala/precalienta; `--diagnose` sólo diagnostica herramientas.
-
-CONFIRMADO POR EJECUCIÓN / YA RESUELTO: imágenes finitas, retorno después de
-PNG/MP4, límites de corte, escapes ASS, render sin audio con ASR apagada.
-CONFIRMADO POR LECTURA: caché SHA/config, worker separado y transcript manual;
-faltan modo auto, contrato semántico y allowlist en el HEAD recibido.
-RIESGO PENDIENTE DE REPRODUCIR: iPhone/VFR real, español propio, ASR sin audio,
-legibilidad móvil y lote. No existen R1/R2 propios en este checkout.
-
-Watch 0.3.2 operativo con motor local y backend none; no WhisperX ni nube.
-Inspección nueva R01 4/4.5/5/5.5 s: perspectiva cambia hacia tablet; no prueba
-zoom digital. Se conserva la procedencia de la evidencia anterior.
-
-Editor local funcional para grabaciones propias. Genera transcripción, subtítulos por frases, plan auditable y MP4 vertical. Mantiene las pausas por defecto y propone intervalos para revisión. Los cortes, apoyos y reencuadres se indican con tiempos de la grabación original. No decide por sí solo qué argumento convence ni promete retención.
-
-## Uso en este equipo
-
-El entorno está instalado fuera del proyecto: `%LOCALAPPDATA%\DentFlow\venv`, Python 3.12, faster-whisper CPU/int8. FFmpeg y ffprobe deben estar en PATH. No necesita claves ni servicios externos para renderizar. El modelo base ya se descargó en la caché de Hugging Face; se puede fijar `transcription.offline: true` en config.yaml.
-
-Desde PowerShell, en C:\dentflow:
+El HEAD recibido `e03cafbfd1cc403c124f1bf8ea9e2ef172064098` movió el proyecto de
+`dentflow/` a **esta raíz**. No ejecutes comandos desde otro árbol Flow.
+PowerShell, desde `C:\xampp\htdocs\tiago3roBTI2026\auto-editor-dentflow`:
 
 ```powershell
-.\editar_reel.bat "C:\ruta\Semana 1\Reel 1" --plan-only
-.\editar_reel.bat "C:\ruta\Semana 1\Reel 1" --preview
-.\editar_reel.bat "C:\ruta\Semana 1\Reel 1"
-.\editar_semana.bat "C:\ruta\Semana 1" --preview
+.\install.bat
+.\editar_reel.bat --diagnose
+& "$env:LOCALAPPDATA\DentFlow\venv\Scripts\python.exe" -m unittest discover -s tests -v
+.\editar_reel.bat ".\contenido-dentflow\semana-1\Reel 1" --auto --preview
+.\editar_reel.bat ".\contenido-dentflow\semana-1\Reel 1" --auto
+.\editar_semana.bat ".\contenido-dentflow\semana-1" --auto
 ```
 
-También puedes arrastrar la carpeta Reel sobre editar_reel.bat. Cada ejecución crea una carpeta nueva dentro de OUTPUT; no sobrescribe renders anteriores. Un error de un Reel permite continuar el lote, pero el proceso termina con código 1. Un lote de cinco es secuencial; no se ha medido todavía una semana real.
+Los tres últimos comandos necesitan que hayas copiado `raw.mp4`. La carpeta
+`contenido-dentflow/semana-1/Reel 1` ya tiene un plan basado en C/E y el guion de
+abajo. El borrador aparece exactamente en
+`contenido-dentflow/semana-1/Reel 1/OUTPUT/VIDEO_BORRADOR.mp4`.
 
-Para reinstalar dependencias, ejecutar install.bat. Usa uv y Python 3.12 fuera del repo; informa si falta FFmpeg. No instala software mediante ventanas visibles ni requiere privilegios de administrador.
+También puedes arrastrar **la carpeta** Reel sobre `editar_reel.bat` o pasar una
+ruta absoluta externa con espacios, sin mover tus archivos. `--preview` genera
+360×640 y también actualiza VIDEO_BORRADOR; ejecuta sin esa opción para obtener
+1080×1920. Se conserva cada versión en `OUTPUT/fecha_hora/FINAL.mp4` o PREVIEW.mp4.
+El alias se reemplaza atómicamente sólo después de validar el render.
 
-## Carpeta mínima
+`install.bat` instala uv/Python 3.12 y dependencias fuera del repo en
+`%LOCALAPPDATA%\DentFlow\venv`; instala FFmpeg mediante winget si falta y descarga
+explícitamente el modelo base. Necesita red sólo en instalación/precalentamiento.
+Probado aquí: Ryzen 5 5600G, ~7.4 GiB RAM utilizable, Python 3.12.14,
+FFmpeg/ffprobe 9.0.2 con libass, faster-whisper 1.1.1 CPU/int8. No WhisperX.
+`--diagnose` verifica herramientas; no demuestra precisión de ASR.
+
+## Flujo y contrato único
 
 ```text
-Semana 1/
-  Assets/                  # sólo material propio/autorizado
+semana-1/
+  Assets/                 imágenes/clips propios compartidos
   Reel 1/
     raw.mp4
-    edicion.json           # opcional
-    transcript.json        # opcional, corrección manual
-    OUTPUT/                # generado
+    edicion.json           opcional, única entrada editorial
+    transcript.json        opcional, palabras corregidas en tiempo fuente
+    OUTPUT/
+      VIDEO_BORRADOR.mp4
+      fecha_hora/          plan_edicion.json, transcript.json, warnings.json,
+                           subtitulos.ass, render_log.txt, FINAL o PREVIEW.mp4
 ```
 
-Sin edicion.json: conserva la grabación completa, encaja la imagen sin recortarla, transcribe y subtitula. Si hay varios candidatos sin raw.mp4 inequívoco, pide indicar source mediante un error claro; no elige el archivo más grande.
+**Sólo raw + --auto:** ASR local, subtítulos y cortes conservadores. Cada corte
+requiere final de frase, pausa entre 1.8 y 6 s y silencio medido por debajo de
+-42 dBFS; conserva al menos .35 s después y .25 s antes. Si eliminaría más del
+25%, conserva todo. Son umbrales ajustables, no garantías de naturalidad; ASR
+puede omitir voz tenue y no ve gestos. Sin palabras fiables, sin audio audible
+o con error ASR, conserva cámara, no inventa texto y escribe avisos.
+No inventa título, diagramas ni narrativa. `--no-auto-cuts` desactiva autocortes.
+Para restaurar fuente íntegra quita `keep_segments` y usa esa opción.
 
-1. Ejecuta --plan-only y lee plan_edicion.json / transcript.json en la carpeta de ejecución.
-2. Para corregir nombres, cifras o negaciones, copia ese transcript.json al nivel de raw.mp4 y edita sólo el texto de las palabras. Usa tiempos en segundos del original; no uses tiempos del montaje. Si haces cambios de segmentación, revisa también los tiempos.
-3. Para aceptar cortes, copia los intervalos deseados de suggested_keep_segments a keep_segments en edicion.json. No copies ciegamente todos: una pausa puede permitir leer o ver una demostración. Cada par es [inicio, fin] del original, ordenado y sin solapamientos. Los límites se amplían a fotogramas y se rechazan si atraviesan una palabra reconocida.
-4. Añade eventos de apoyo únicamente cuando ayuden a explicar ese momento. edicion.example.json ilustra el esquema: debes ajustar nombres y tiempos a tu grabación.
-5. Revisa --preview y después exporta completo. El preview es 360×640; el final 1080×1920. No constituye una aprobación automática de calidad.
+**edicion.json:** compatible con `source`, `keep_segments` y `events` de V1.
+En V2 agrega `schema_version:2`, `mode:editorial|auto`, `script_summary`,
+`allowed_assets` (lista de rutas exactas), `beats`, `camera_policy`,
+`subtitle_policy`, `cut_policy`. El archivo [ejemplo](edicion.example.json)
+conserva eventos con tiempos explícitos; el [plan R1](contenido-dentflow/semana-1/Reel%201/edicion.json)
+usa frases de la locución. Los planes antiguos avisan que falta allowlist V2.
 
-Ejemplo mínimo de corte y apoyo:
+- Cada beat necesita `id`, `purpose`, `reason`, `approved:true` para intervenir,
+  `fallback:camera` y **sólo uno** entre `source_time:[inicio,fin]` o `match_text`.
+  Se exige una coincidencia textual única de al menos tres palabras, ignorando
+  tildes, mayúsculas y puntuación. No hay selección por keywords ni fuzzy matching.
+- `duration` fija la ventana o `until_text` la termina al empezar otra frase única.
+  Si faltan frases, se repiten o no alcanza `min_read_seconds`, omite el beat y avisa.
+  `source_time` no se combina con `until_text`. Revisa triggers contra tu voz.
+- `asset` sólo puede estar en allowed_assets y en el Reel, Assets de su semana o
+  `asset_roots` expresamente declarados. Research y videos_estudiar se rechazan.
+  El manifiesto de Assets describe contenidos; no selecciona recursos en runtime.
+  `approved` declara tu decisión editorial; no verifica derechos de terceros.
+- Conflictos: primero events explícitos, después beats por `priority` descendente
+  (empates respetan orden). Los inferiores se omiten. Un evento que cruce un corte
+  explícito se rechaza con mensaje: divide el beat/evento en dos intervalos fuente
+  o conserva ese tramo. El autocorte protege las ventanas visuales ya resueltas.
+- Events de entrada usan `start/end` fuente y `time_basis:source` opcional.
+  El plan de salida usa `source_start/source_end` más `start/end` de montaje y
+  `time_basis:output`; incluye `time_map`. Nunca copies events de salida como entrada.
+  `plan_edicion.json` es evidencia generada, no una segunda fuente de configuración.
 
-```json
-{
-  "source": "raw.mp4",
-  "keep_segments": [[0, 7.5], [9, 24]],
-  "events": [{
-    "type": "asset",
-    "file": "../Assets/agenda-propia.mp4",
-    "approved": true,
-    "start": 12,
-    "end": 17,
-    "offset": 2,
-    "layout": "full",
-    "reason": "Mostrar el cambio de estado al confirmar el turno"
-  }]
-}
-```
+`--plan-only` deja transcripción/plan sin render. Para corregir nombres, cifras,
+negaciones y puntuación, copia `OUTPUT/fecha_hora/transcript.json` junto a raw.mp4
+y cambia `words[].text`, conservando tiempos **del original**. Vuelve a ejecutar.
+Ese archivo tiene prioridad; la caché automática depende de SHA-256/configuración.
+Tras cambiar raw.mp4, retira o revalida cualquier transcript manual antiguo.
 
-En este ejemplo start 12 del original cae en 10.5 del montaje. offset es el inicio dentro del clip auxiliar; su audio se omite y continúa la voz principal. layout admite card (zona superior, conserva contexto) o full (encaje completo). Las imágenes pueden ser PNG/JPG/JPEG/WebP; los videos MP4/MOV/M4V/WebM/MKV. No se repiten clips auxiliares que resulten cortos: se devuelve error. approved expresa tu autorización; no verifica licencias.
+## Imagen, composición y audio
 
-Un evento reframe usa start/end/reason, scale (1–1.3), x/y (0–1). Es un cambio de encuadre estático por recorte, **no** una segunda cámara ni un zoom animado. No hay zoom periódico. V1 admite un evento visual a la vez y exige que cada evento esté dentro de un tramo conservado; no puede cubrir una unión de cortes sin ajustar el plan. Esta limitación queda pendiente para V2.
+`camera_policy` admite `fit:contain|cover` y punto de interés `x/y` entre 0 y 1.
+Contain conserva el encuadre; cover recorta y exige comprobar cara/manos.
+FFmpeg aplica metadatos de orientación, convierte a 30 fps y normaliza timestamps;
+VFR/rotación de un iPhone real todavía requieren comprobación.
 
-## Reglas configurables y límites
+`layout:card` comparte cuadro; `full` sustituye visualmente la cámara durante la
+prueba. Con subtítulos, el gráfico ocupa como máximo hasta 69% del alto; la banda
+inferior queda libre. `focus_region:[x,y,ancho,alto]` recorta una región normalizada
+del asset **antes** de escalar. No detecta cara ni decide automáticamente qué leer.
+Una card puede tapar al presentador: el reporte pide revisión.
 
-- config.yaml controla tamaño, FPS, encaje, audio, modelo y subtítulos. contain conserva todo el cuadro; cover recorta al centro y requiere verificar ojos, manos y pantallas.
-- Subtítulos blancos con contorno, dos líneas como máximo, 26 caracteres por línea, grupos por puntuación, pausas y duración. La velocidad alta de lectura genera avisos; no se ralentiza la voz automáticamente.
-- Los cortes sugeridos sólo consideran huecos entre palabras de al menos 1.2 s. No eliminan automáticamente silencio inicial/final ni emisiones breves.
-- La caché ASR depende del SHA-256 del original y configuración. Un transcript.json manual tiene prioridad; no tiene garantía de exactitud. El proceso de ASR libera su memoria antes de renderizar.
-- FFmpeg utiliza dos hilos de codificación y un hilo por grafo de filtros. Los temporales se crean fuera del repo y se eliminan al terminar.
-- Audio principal normalizado a objetivo configurable (-16 LUFS inicial), AAC 48 kHz; normalización de una pasada, no masterización certificada. Si no hay audio, se crea silencio.
-- El plan conserva procedencia, tiempos fuente/salida, eventos, avisos, configuración y duración. No hay búsqueda automática de material, guiones generados, publicación ni assets de terceros.
-- Las animaciones de interfaz/easing avanzadas y decisiones semánticas se posponen. No requiere Remotion, Adobe, WhisperX ni API.
+Recursos permitidos: `fade`/`none` para gráficos; `HOOK_TEXT`/`CALLOUT` de hasta dos
+líneas con aparición discreta; `CAMERA_PUNCH_IN_OUT` animado con easing seno al
+cuadrado y escala máxima 1.10 (vuelve al encuadre inicial); `DIAGRAM_REVEAL` recorre
+`steps:[{focus_region,duration}]` de elementos ya preparados. Los steps suman la
+duración del beat. Para locución variable conviene un beat por frase, como R1.
+No crea UI a partir de voz. El antiguo `reframe` sin `animated:true` sigue estático.
+`demo:true` añade EJEMPLO FICTICIO. Los textos se escapan en ASS; no son filtros FFmpeg.
 
-## Verificación y evidencia
+Subtítulos: blanco/contorno, máximo dos líneas, 26 caracteres por línea de inicio,
+fuente/tamaño/márgenes configurables. Reporta caracteres/s y caja geométrica estimada;
+rechaza configuraciones que invadan gráficos. No es medición tipográfica perfecta
+ni detección automática de boca/controles IG. Valida en tu teléfono.
+
+Audio AAC 48 kHz, loudnorm inicial -16 LUFS/-1.5 dBTP de una pasada; silencio no se
+normaliza. `audio.normalize:false` lo desactiva. Se miden pico/volumen medio/silencios
+fuente y salida; se avisa de fuente tenue o posible clipping. No repara micrófono
+saturado ni elimina automáticamente ruido. Cortes sin solapar sílabas.
+Export H.264 yuv420p, +faststart; valida duración, codecs, dimensiones y decode completo.
+
+## Primer Reel: guion original para grabar
+
+Lee con tus pausas naturales. No fuerces una duración; deja terminar cada idea.
+Los triggers se adaptan a los tiempos reconocidos, pero no a cambios arbitrarios
+de palabras. No necesitas preparar nuevos assets ni afirmar funciones no demostradas.
+
+> ¿Cuántas consultas siguen abiertas y quién las debe contactar? Si la respuesta
+> está repartida en conversaciones, cuesta saber qué sigue.
+>
+> Mirá estos cuatro datos. Estado: en qué etapa está. Responsable: quién sigue
+> esto. Fecha: cuándo revisar. Próxima acción: qué hacer ahora.
+>
+> En este ejemplo ficticio, el seguimiento está pendiente y lo tiene Recepción.
+> La próxima acción es llamar hoy a las dieciséis. Esto es una ilustración del seguimiento.
+>
+> La idea es simple. Que cada consulta abierta tenga alguien a cargo y un siguiente
+> paso. Revisá una consulta de tu clínica: ¿están claros esos datos?
+
+E aparece por campo durante su definición; C enseña estado/responsable y luego
+la acción, excluyendo nombre/contacto. La interpretación vuelve a cámara. El zoom
+de conclusión queda **sin aprobar** hasta ver tu toma. CTA utilizable hoy, sin
+prometer una descarga inexistente, pacientes, ventas ni ingresos.
+
+Inspección visual de A–F realizada en esta sesión; [manifiesto](contenido-dentflow/semana-1/Assets/manifest.json):
+
+| Asset | Qué explica | Límite editorial |
+|---|---|---|
+| A | Tratamiento, estado y próxima acción en tres filas | No muestra responsable; ejemplo ficticio |
+| B | Conversación frente a control | Aislar paneles para móvil; no prueba funcionalidad |
+| C | Seguimiento pendiente, Recepción, llamar hoy 16:00 | Demo ilustrada; recortar nombre/contacto |
+| D | Responsables/acciones faltantes en auditoría | Título dice 10 pero hay seis filas; no usar como conteo validado |
+| E | Estado, responsable, fecha, próxima acción | Un bloque por frase para leer en vertical |
+| F | Conversaciones dispersas sin siguiente paso claro | Omitir si sólo repite la voz |
+
+## Evidencia, checkpoints y límites
+
+**A — `83db49b`**: git limpio, fetch/pull ff-only y comparación con `7082841`.
+7/7 tests V1 antes de modificar el motor (3.89 s, cuatro renders). Primer intento
+bloqueado por PyYAML ausente, segundo por PATH sin refrescar. Instalación desde PC
+sin entorno; smoke de 8 s de voz real R01 con modelo base offline. Pycache retirado
+sólo del índice, archivos locales conservados; requests directo/mapa sin consumidores retirados.
+
+**B — `3a2d2e2`**: --auto, degradación ASR, medición de audio, borrador atómico y
+reportes. 11/11 tests (6.25 s). Patrón sintético de 12 s revisado con Watch en .1/6/11.8 s:
+`%LOCALAPPDATA%\DentFlow\validacion_v2\Reel 1\OUTPUT\VIDEO_BORRADOR.mp4`.
+
+**C — edición educativa**: motor conservado en src/editor.py; planning.py aísla
+validación pura y triggers. 17/17 tests (12.24 s, hubo render final concurrente).
+Dos Reels con voz sintética SAPI española local, ASR real y assets distintos, vía
+editar_semana.bat; 50.93 y 22.60 s. Inspección de preview con Watch detectó steps
+demasiado rápidos: se corrigieron por frases de entrada/salida y se ampliaron
+regiones C. El rótulo de prueba sintética se movió para no pisar el hook.
+Artefactos finales en `%LOCALAPPDATA%\DentFlow\validacion_v2\editorial_20260929_090522\Reel 1\OUTPUT\VIDEO_BORRADOR.mp4`
+y `Reel 2\OUTPUT\VIDEO_BORRADOR.mp4` del mismo directorio.
+
+| Hallazgo de auditoría | Clasificación al checkpoint C |
+|---|---|
+| PNG infinito / video congelado tras overlay | YA RESUELTO en V1; CONFIRMADO POR EJECUCIÓN, ventanas por píxel |
+| Caché SHA, manual preferente, worker que libera memoria | CONFIRMADO POR LECTURA y ASR/cache por ejecución |
+| Auto y fallback sin audio/ASR | CONFIRMADO POR EJECUCIÓN |
+| Allowlist, traversal, triggers únicos, múltiples cortes, escapes ASS | CONFIRMADO POR EJECUCIÓN |
+| Movimiento, foco, subtítulos separados de demo | Renders ejecutados; muestreo visual, no evaluación humana completa |
+| Dos grabaciones reales, saltos de cabeza/sílabas y escucha iPhone | RIESGO PENDIENTE DE REPRODUCIR |
+| Calidad profesional / eficacia comercial | No demostrada por estos tests |
+
+Reproducir la aceptación sintética (Windows con voz española SAPI; crea directorio
+nuevo fuera del repo, nunca escribe en tu Reel):
 
 ```powershell
-& "$env:LOCALAPPDATA\DentFlow\venv\Scripts\python.exe" src/editor.py --diagnose
-& "$env:LOCALAPPDATA\DentFlow\venv\Scripts\python.exe" -m unittest discover -s tests -v
+& "$env:LOCALAPPDATA\DentFlow\venv\Scripts\python.exe" tests/render_acceptance.py
+& "$env:LOCALAPPDATA\DentFlow\venv\Scripts\python.exe" tests/render_acceptance.py --final
 ```
 
-Pruebas de tiempos, palabras breves, límites de corte, agrupación de subtítulos, escapes ASS y renders reales de PNG/MP4 con corte y eventos tardíos. Muestra de aceptación original y sintética en `%LOCALAPPDATA%\DentFlow\validacion_v1`; no sustituye validar una grabación tuya. No había grabaciones propias en las carpetas Reel del proyecto.
+Watch 0.3.2 local/backend none listo. Evidencia anterior **leída del repo**, no
+reobservada completa: [CSV](Flow/Herramientas/DentFlow_AutoEditor/research/evidencia.csv)
+y [guía](Flow/Herramientas/DentFlow_AutoEditor/research/dentflow_educativo_v1.md).
+T04/T10 sólo transcript; R07/R08/R10 inaccesibles. Nuevas pasadas: R01 4–5.5 s
+(cuatro imágenes, cambio de perspectiva hacia tablet, no zoom digital demostrado);
+R05 69/70/71 s (tarjeta ya a 69, retorno al expositor a 71). R07/R08 un intento
+cada uno, empty media response. Sin Apify ni cookies. R10 sin MP4 reproducible.
+Las muestras pueden omitir microcortes; no se afirma escucha completa de terceros.
 
-La investigación está en la [guía audiovisual](Flow/Herramientas/DentFlow_AutoEditor/research/dentflow_educativo_v1.md) y [evidencia](Flow/Herramientas/DentFlow_AutoEditor/research/evidencia.csv). Los antiguos enlaces a hallazgos/propuesta no existían. Se retiró el mapa obsoleto sin consumidores y la dependencia directa requests sin uso.
+Transferencias adoptadas: gráfico en la explicación y vuelta a cámara para
+interpretar (R01 32–34, R02 32–34); ausencia de zoom periódico (R06 15–16/85);
+montaje antes de adornos (T02 179); foco de UI y jerarquía (T08 105, T06 103).
+No se copiaron frases, imágenes ni diseños de referentes a los assets DentFlow.
 
+**FFmpeg suficiente por ahora.** Sin Node/Remotion incorporado. La [FAQ oficial de
+licencia](https://www.remotion.dev/docs/license/faq) revisada 29-09-2026 permite uso
+comercial/automatización gratuito a individuos y equipos de hasta tres personas,
+sujeto a términos; vuelve a revisar si participan clientes que operan el código.
+No se justifica una prueba React antes de validar dos tomas propias.
+
+Runtime fuerza modelo offline, HF_HUB_OFFLINE y desactiva telemetría Hugging Face;
+no importa Watch ni SDKs comerciales. Instalación y estudio sí descargan. Para
+comprobar aislamiento completo puedes desconectar la red tras install.bat; para
+inspección por proceso usa Monitor de recursos de Windows. No se afirma que el
+resto del sistema operativo no haga conexiones.
+
+Antes de publicar: ver completo, escuchar uniones/voz, corregir cifras y negaciones,
+comprobar móvil y que cada demo explique algo. Si falla claridad, cambia el plan
+o la grabación, no agregues efectos. Falta validación real R1/R2 y escucha humana;
+el software y el procedimiento ya no dependen de otra investigación.

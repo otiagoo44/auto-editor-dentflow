@@ -1,5 +1,7 @@
 {
+  "schema_version": 2,
   "source": "raw.mp4",
+  "allowed_assets": ["../Assets/demo-propia.mp4"],
   "events": [
     {
       "type": "asset",
@@ -13,6 +15,7 @@
     },
     {
       "type": "reframe",
+      "approved": true,
       "start": 16,
       "end": 19,
       "scale": 1.08,

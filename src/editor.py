@@ -16,6 +16,7 @@ from datetime import datetime
 from pathlib import Path
 
 import yaml
+from planning import asset_path, bounded, policies, region, resolve_beats
 
 ROOT = Path(__file__).resolve().parents[1]
 VIDEO_EXTS = {".mp4", ".mov", ".m4v", ".webm", ".mkv"}
@@ -244,9 +245,8 @@ def validate_cut_boundaries(words, keep):
 
 def lines_for(text, limit):
     lines, current = [], ""
-    for token in text.split():
-        if len(token) > limit:
-            raise ValueError(f"Palabra demasiado larga para subtítulo: {token}; revisa transcript.json.")
+    tokens = [part for word in text.split() for part in [word[i:i+limit] for i in range(0, len(word), limit)]]
+    for token in tokens:
         if current and len(current) + 1 + len(token) > limit:
             lines.append(current)
             current = token
@@ -289,9 +289,20 @@ def ass_time(t):
     return f"{centis // 360000}:{centis // 6000 % 60:02d}:{centis // 100 % 60:02d}.{centis % 100:02d}"
 
 
-def write_ass(captions, path, cfg):
+def ass_escape(text):
+    return text.replace("\\", "").replace("{", "(").replace("}", ")").replace("\r", " ").replace("\n", r"\N")
+
+
+def write_ass(captions, path, cfg, events=()):
     v, s = cfg["video"], cfg["subtitles"]
     scale = v["width"] / 1080
+    if not re.fullmatch(r"[\w -]{1,60}", s['font']):
+        raise ValueError('Nombre de fuente inválido.')
+    bounded(s['font_size'], 24, 80, 'font_size')
+    bounded(s['margin_v'], 180, 600, 'margin_v')
+    # Banda fija bajo el área gráfica. Evita colisiones por configuración extrema.
+    if (1920-s['margin_v']-2.6*s['font_size']) / 1920 < .70:
+        raise ValueError('Subtítulos invaden área gráfica: reduce margin_v/font_size.')
     content = f"""[Script Info]
 ScriptType: v4.00+
 PlayResX: {v['width']}
@@ -308,15 +319,26 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
 """
     for start, end, text in captions:
         # Texto no puede introducir instrucciones ASS.
-        text = text.replace("\\", "").replace("{", "(").replace("}", ")").replace("\r", " ").replace("\n", r"\N")
+        text = ass_escape(text)
         content += f"Dialogue: 0,{ass_time(start)},{ass_time(end)},Default,,0,0,0,,{text}\n"
+    for ev in events:
+        label = ev.get('text') if ev['type'] == 'text' else ('EJEMPLO FICTICIO' if ev.get('demo') else None)
+        if label:
+            text = ass_escape('\n'.join(lines_for(label, 28)))
+            tags = r'{\an8\pos(' + f"{v['width']/2:.1f},{v['height']*.12:.1f}" + r')\fs' + f'{48*scale:.1f}' + r'\fad(150,150)}'
+            content += f"Dialogue: 1,{ass_time(ev['start'])},{ass_time(ev['end'])},Default,,0,0,0,,{tags}{text}\n"
     path.write_text(content, encoding="utf-8")
 
 
-def prepare_events(specs, keep, folder, duration):
+def prepare_events(specs, keep, folder, duration, allowed_assets=None, roots=(), strict=False):
     events = []
+    allowed = {asset_path(name, folder, roots) for name in allowed_assets} if allowed_assets is not None else None
     for spec in specs:
         ev = dict(spec)
+        if ev.get('time_basis', 'source') != 'source' or any(k in ev for k in ('output_time', 'output_start', 'output_end')):
+            raise ValueError('Eventos de entrada sólo admiten tiempo fuente (time_basis=source).')
+        if strict and ev.get('approved') is not True:
+            raise ValueError('Evento V2 requiere approved:true.')
         a, b = float(ev["start"]), float(ev["end"])
         if not (math.isfinite(a) and math.isfinite(b) and 0 <= a < b <= duration):
             raise ValueError("Evento fuera del video.")
@@ -326,10 +348,13 @@ def prepare_events(specs, keep, folder, duration):
             raise ValueError("Un evento cruza un corte: ajusta start/end al tramo conservado.")
         ev["source_start"], ev["source_end"] = a, b
         ev["start"], ev["end"] = remap_time(a, keep), remap_time(b, keep)
+        ev['time_basis'] = 'output'
         if ev["type"] == "asset":
             if ev.get("approved") is not True:
                 raise ValueError("Asset requiere approved:true (propio o autorizado).")
-            p = (folder / ev["file"]).resolve()
+            p = asset_path(ev['file'], folder, roots)
+            if allowed is not None and p not in allowed:
+                raise ValueError(f'Asset no incluido en allowed_assets del Reel: {p.name}')
             if p.suffix.lower() not in IMAGE_EXTS | VIDEO_EXTS or not p.is_file():
                 raise ValueError(f"Asset local no válido: {p}")
             if "videos_estudiar" in p.parts or "research" in p.parts:
@@ -342,17 +367,26 @@ def prepare_events(specs, keep, folder, duration):
                 raise ValueError("El clip auxiliar no cubre la duración del evento.")
             if ev.get("layout", "card") not in ("card", "full"):
                 raise ValueError("layout debe ser card o full.")
+            if 'focus_region' in ev:
+                ev['focus_region'] = region(ev['focus_region'])
+            if ev.get('animation', 'fade') not in ('fade', 'none'):
+                raise ValueError('Asset: animation debe ser fade o none; revela regiones mediante beats.')
         elif ev["type"] == "reframe":
             ev["scale"] = float(ev.get("scale", 1.08))
             ev["x"], ev["y"] = float(ev.get("x", .5)), float(ev.get("y", .5))
             if not (1 < ev["scale"] <= 1.3 and 0 <= ev["x"] <= 1 and 0 <= ev["y"] <= 1):
                 raise ValueError("Reencuadre: escala (1,1.3], x/y entre 0 y 1.")
+            if ev.get('animated') and ev['scale'] > 1.10:
+                raise ValueError('Punch animado limitado a escala 1.10.')
+        elif ev['type'] == 'text':
+            if not str(ev.get('text', '')).strip() or len(lines_for(ev['text'], 28)) > 2:
+                raise ValueError('Título/callout requiere texto breve, máximo 2 líneas de 28 caracteres.')
         else:
-            raise ValueError("Evento desconocido: usa asset o reframe.")
+            raise ValueError("Evento desconocido: usa asset, reframe o text.")
         events.append(ev)
     events.sort(key=lambda x: x["start"])
     if any(b["start"] < a["end"] for a, b in zip(events, events[1:])):
-        raise ValueError("V1 admite un solo evento visual a la vez.")
+        raise ValueError("Eventos superpuestos: divide intervalos o prioriza beats explícitamente.")
     return events
 
 
@@ -367,7 +401,8 @@ def fit_filter(cfg):
     if v["fit"] == "contain":
         return f"scale={w}:{h}:force_original_aspect_ratio=decrease:force_divisible_by=2,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2,setsar=1"
     if v["fit"] == "cover":
-        return f"scale={w}:{h}:force_original_aspect_ratio=increase:force_divisible_by=2,crop={w}:{h},setsar=1"
+        x, y = bounded(v.get('x', .5), 0, 1, 'x'), bounded(v.get('y', .5), 0, 1, 'y')
+        return f"scale={w}:{h}:force_original_aspect_ratio=increase:force_divisible_by=2,crop={w}:{h}:(iw-ow)*{x}:(ih-oh)*{y},setsar=1"
     raise ValueError("video.fit debe ser contain o cover.")
 
 
@@ -405,7 +440,14 @@ def render_final(cut, ass, events, out, cfg, temp, duration):
         start, end = ev["start"], ev["end"]
         output = f"[event{n}]"
         enable = f"gte(t,{start:.6f})*lt(t,{end:.6f})"
-        if ev["type"] == "reframe":
+        if ev['type'] == 'text':
+            continue  # ASS: texto escapado; nunca se interpola texto en filtros.
+        if ev['type'] == 'reframe' and ev.get('animated'):
+            progress = f"min(1,max(0,(on/{v['fps']}-{start:.6f})/{end-start:.6f}))"
+            zoom = f"1+{ev['scale']-1:.6f}*sin(PI*{progress})^2"
+            filters.append(f"{current}zoompan=z='{zoom}':x='(iw-iw/zoom)*{ev['x']}':"
+                           f"y='(ih-ih/zoom)*{ev['y']}':d=1:s={w}x{h}:fps={v['fps']}{output}")
+        elif ev["type"] == "reframe":
             cw, ch = int(w / ev["scale"]) // 2 * 2, int(h / ev["scale"]) // 2 * 2
             filters += [f"{current}split[base{n}][zoom{n}]",
                         f"[zoom{n}]crop={cw}:{ch}:(iw-ow)*{ev['x']}:(ih-oh)*{ev['y']},scale={w}:{h}[z{n}]",
@@ -420,18 +462,29 @@ def render_final(cut, ass, events, out, cfg, temp, duration):
             full = ev.get("layout", "card") == "full"
             aw, ah = (w, h) if full else (int(w*.88)//2*2, int(h*.52)//2*2)
             x, y = (0, 0) if full else ((w-aw)//2, int(h*.12))
+            if cfg['subtitles']['enabled'] or ev.get('demo'):
+                aw, ah = int(w*.92)//2*2, int(h*(.50 if full else .40))//2*2
+                x, y = (w-aw)//2, int(h*.19)
+                if full:
+                    filters.append(f"{current}drawbox=x=0:y=0:w=iw:h=ih:color=0x111827:t=fill:enable='{enable}'[bg{n}]")
+                    current = f'[bg{n}]'
             dur = end-start
-            fade = min(.12, dur/4)
+            fade = min(.15, dur/4)
+            crop = ''
+            if 'focus_region' in ev:
+                rx,ry,rw,rh = ev['focus_region']
+                crop = f'crop=iw*{rw}:ih*{rh}:iw*{rx}:ih*{ry},'
+            fades = (f"fade=t=in:st=0:d={fade}:alpha=1,fade=t=out:st={dur-fade:.6f}:d={fade}:alpha=1,"
+                     if ev.get('animation', 'fade') != 'none' else '')
             filters.append(f"[{index}:v]trim=duration={dur:.6f},setpts=PTS-STARTPTS,"
-                           f"fps={v['fps']},scale={aw}:{ah}:force_original_aspect_ratio=decrease:force_divisible_by=2,"
-                           f"pad={aw}:{ah}:(ow-iw)/2:(oh-ih)/2,setsar=1,format=rgba,"
-                           f"fade=t=in:st=0:d={fade}:alpha=1,"
-                           f"fade=t=out:st={dur-fade:.6f}:d={fade}:alpha=1,"
+                           f"fps={v['fps']},{crop}scale={aw}:{ah}:force_original_aspect_ratio=decrease:force_divisible_by=2,"
+                           f"pad={aw}:{ah}:(ow-iw)/2:(oh-ih)/2:color=0x111827,setsar=1,format=rgba,"
+                           f"{fades}"
                            f"setpts=PTS+{start:.6f}/TB[asset{n}]")
             filters.append(f"{current}[asset{n}]overlay={x}:{y}:eof_action=pass:repeatlast=0:"
                            f"enable='{enable}'{output}")
         current = output
-    if cfg["subtitles"]["enabled"]:
+    if cfg["subtitles"]["enabled"] or any(ev['type'] == 'text' or ev.get('demo') for ev in events):
         # ASS copiado a nombre fijo en cwd: evita escape de C: y apóstrofos de rutas.
         filters.append(f"{current}ass=subtitulos.ass[vout]")
     else:
@@ -456,6 +509,26 @@ def render_final(cut, ass, events, out, cfg, temp, duration):
 
 
 def process_reel(folder, cfg, plan_only=False, preview=False, auto=False):
+    folder = folder.resolve()
+    output = folder / 'OUTPUT'
+    output.mkdir(exist_ok=True)
+    run_dir = output / datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+    run_dir.mkdir()
+    try:
+        return _process_reel(folder, cfg, plan_only, preview, auto, run_dir)
+    except Exception as exc:
+        message = f'ERROR recuperable: {exc}\nÚltimo VIDEO_BORRADOR conservado.\n'
+        with (run_dir/'render_log.txt').open('a', encoding='utf-8') as f:
+            f.write(message)
+        plan_file = run_dir/'plan_edicion.json'
+        plan = read_json(plan_file) if plan_file.exists() else {}
+        plan.update(status='failed', error=str(exc))
+        write_json(plan_file, plan)
+        write_json(run_dir/'warnings.json', plan.get('warnings', []) + [message])
+        raise
+
+
+def _process_reel(folder, cfg, plan_only, preview, auto, run_dir):
     started = time.monotonic()
     cfg = copy.deepcopy(cfg)
     # Ningún render descarga modelos: la instalación es la única etapa con red.
@@ -464,12 +537,11 @@ def process_reel(folder, cfg, plan_only=False, preview=False, auto=False):
         cfg["video"].update(width=360, height=640, preset="veryfast", crf=24)
     folder = folder.resolve()
     spec = read_json(folder / "edicion.json") if (folder / "edicion.json").exists() else {}
+    policies(spec, cfg)
     source = (folder / spec["source"]).resolve() if "source" in spec else choose_source_video(folder)
     duration, digest = ffprobe_duration(source), fingerprint(source)
     output = folder / "OUTPUT"
     output.mkdir(exist_ok=True)
-    run_dir = output / datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    run_dir.mkdir()
     warnings = ["Revisar manualmente nombres, cifras, negaciones y sincronía."]
     audio = audio_analysis(source, duration)
     if not audio["audible"]:
@@ -488,11 +560,14 @@ def process_reel(folder, cfg, plan_only=False, preview=False, auto=False):
     fps = cfg["video"]["fps"]
     suggested = validate_ranges(build_keep_segments(words, duration, cfg), duration, fps)
     automatic = auto or spec.get("mode") == "auto"
-    protected = [(ev["start"], ev["end"]) for ev in spec.get("events", [])]
+    resolved = resolve_beats(spec, words, duration, warnings)
+    protected = [(ev["start"], ev["end"]) for ev in resolved]
     default_keep = auto_keep_segments(words, duration, cfg, audio, protected) if automatic else [(0, duration)]
     keep = validate_ranges(spec.get("keep_segments", default_keep), duration, fps)
     validate_cut_boundaries(words, keep)
-    events = prepare_events(spec.get("events", []), keep, folder, duration)
+    strict = spec.get('schema_version', 1) == 2
+    events = prepare_events(resolved, keep, folder, duration,
+                            spec.get('allowed_assets', [] if strict else None), spec.get('asset_roots', []), strict)
     captions = make_captions(words, keep, cfg) if cfg["subtitles"]["enabled"] else []
     mapping, offset = [], 0.0
     for a, b in keep:
@@ -500,13 +575,31 @@ def process_reel(folder, cfg, plan_only=False, preview=False, auto=False):
         offset += b-a
     if not words:
         warnings.append("Sin palabras: no hay subtítulos; no implica que el audio no tenga voz.")
+    if not strict and events:
+        warnings.append('Plan legado: migrar a schema_version:2 con allowed_assets; sólo se usan archivos explícitos.')
+    if any(ev.get('layout') == 'card' for ev in events):
+        warnings.append('Card ocupa zona superior: revisar manualmente cara/manos; sin detección automática.')
     for a,b,t in captions:
         if len(t.replace("\n", " ")) / (b-a) > cfg["subtitles"]["warn_chars_per_second"]:
             warnings.append(f"Lectura rápida: {a:.2f}–{b:.2f}s; revisar frase/pausa.")
+    caption_diagnostics = []
+    for a,b,t in captions:
+        lines = t.splitlines()
+        bottom = 1-cfg['subtitles']['margin_v']/1920
+        top = bottom-len(lines)*cfg['subtitles']['font_size']*1.3/1920
+        if len(lines) > 2:
+            raise ValueError('Palabra/texto excesivo: corregir transcript.json para máximo dos líneas.')
+        overlaps = [ev.get('id', ev['type']) for ev in events if ev['type'] == 'asset'
+                    and a < ev['end'] and b > ev['start'] and top < .69]
+        if overlaps:
+            raise ValueError('Colisión geométrica entre subtítulos y gráfico; ajustar subtitle_policy.')
+        caption_diagnostics.append(dict(start=a,end=b,chars_per_second=round(len(t)/(b-a),2),
+                                        estimated_box=[.074,top,.852,bottom-top],overlays_colliding=overlaps))
     plan = dict(version=2, mode="auto" if automatic else "editorial", source=str(source), sha256=digest, transcript_source=transcript_source,
                 source_duration=duration, output_duration=offset, keep_segments=keep,
                 suggested_keep_segments=suggested, time_map=mapping, events=events,
                 captions=[dict(start=a,end=b,text=t) for a,b,t in captions], warnings=warnings,
+                script_summary=spec.get('script_summary', ''), caption_diagnostics=caption_diagnostics,
                 config=cfg, audio_analysis=audio, preview=preview, status="plan")
     write_json(run_dir / "plan_edicion.json", plan)
     write_json(run_dir / "transcript.json", {"words": [asdict(w) for w in words]})
@@ -515,7 +608,7 @@ def process_reel(folder, cfg, plan_only=False, preview=False, auto=False):
     log.write_text(f"DentFlow V2 | modo {plan['mode']} | {'preview' if preview else 'final'}\n"
                    f"Fuente: {duration:.3f}s; montaje: {offset:.3f}s; tramos: {len(keep)}\n"
                    f"Transcripción: {transcript_source}\n" + "\n".join(warnings) + "\n", encoding="utf-8")
-    write_ass(captions, run_dir / "subtitulos.ass", cfg)
+    write_ass(captions, run_dir / "subtitulos.ass", cfg, events)
     print(f"Plan: {run_dir}", flush=True)
     if plan_only:
         return run_dir
@@ -537,7 +630,9 @@ def process_reel(folder, cfg, plan_only=False, preview=False, auto=False):
         run(["ffmpeg", "-v", "error", "-xerror", "-i", partial, "-f", "null", "-"])
         final = run_dir / ("PREVIEW.mp4" if preview else "FINAL.mp4")
         partial.rename(final)
-    plan.update(status="rendered", rendered_duration=measured,
+    final_audio = audio_analysis(final, measured)
+    plan.update(status="rendered", rendered_duration=measured, rendered_audio=final_audio,
+                video_bitrate=video.get('bit_rate'), fps=video.get('avg_frame_rate'),
                 elapsed_seconds=round(time.monotonic()-started, 2), file=str(final))
     write_json(run_dir / "plan_edicion.json", plan)
     # Reemplazo atómico dentro del mismo volumen, solamente tras validar el render.

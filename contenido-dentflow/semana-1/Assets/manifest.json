@@ -1,0 +1,12 @@
+{
+  "provenance": "Inspección visual directa de los seis PNG locales, 29-09-2026. No son capturas verificadas de un sistema en funcionamiento.",
+  "assets": {
+    "A": {"file": "Asset A.png", "explains": "Tabla de tres tratamientos, estado y próxima acción", "limits": "Sin responsable; presentar como ejemplo ficticio"},
+    "B": {"file": "Asset B.png", "explains": "Conversación frente a control: estado, responsable, fecha, próxima acción", "limits": "Separar paneles en móvil; no prueba funcionalidades"},
+    "C": {"file": "Asset C.png", "explains": "Consulta demo: seguimiento pendiente, Recepción y llamar hoy 16:00", "limits": "Contiene nombre/contacto ilustrativos; usar regiones que los excluyen y rótulo ficticio"},
+    "D": {"file": "Asset D.png", "explains": "Auditoría de registros con responsable o acción faltantes", "limits": "Título dice 10 consultas pero muestra seis filas; no usar como conteo validado"},
+    "E": {"file": "Asset E.png", "explains": "Cuatro campos para seguimiento: estado, responsable, fecha y próxima acción", "limits": "Mostrar un bloque por vez en vertical"},
+    "F": {"file": "Asset F.png", "explains": "Conversaciones dispersas dejan incierta la siguiente acción", "limits": "Ilustración de un problema; omitir si voz ya lo explica"}
+  },
+  "selection": "Descriptivo, no selecciona assets en runtime. Cada edicion.json enumera su propia allowed_assets y beats."
+}

@@ -1,5 +1,6 @@
 {
   "created": "2026-09-28",
+  "status_note_2026_09_29": "Los status originales son históricos. Estado vigente y procedencia: Flow/Herramientas/DentFlow_AutoEditor/research/evidencia.csv. V2 reutiliza ese estudio; nuevas pasadas R01/R05 y acceso fallido R07/R08 registrados allí.",
   "objective": "Datos visuales verificables, no inferencias desde captions",
   "watch_install": "La skill fue instalada por el usuario en SU Codex; no se comparte automáticamente con ChatGPT. Debe comprobarse en la sesión local de Codex.",
   "provenance": "Ocho nuevas URL de Instagram derivan de extracción previa de Apify, distintas de la primera selección. Dos materiales de Tomi proceden de fuentes públicas identificadas; segundo puede ser inaccesible.",
