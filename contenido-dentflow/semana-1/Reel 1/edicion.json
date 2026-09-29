@@ -2,7 +2,7 @@
   "schema_version": 2,
   "mode": "editorial",
   "source": "raw.mp4",
-  "script_summary": "¿Cuántas consultas siguen abiertas y quién las debe contactar? Guion original en README. Triggers pendientes de contrastar con raw propio; verificados sólo con voz sintética local. Si no coinciden una vez se conserva cámara.",
+  "script_summary": "Demos consecutivas con corte directo para evitar vacíos entre fades. ¿Cuántas consultas siguen abiertas y quién las debe contactar? Guion original en README. Triggers pendientes de contrastar con raw propio; verificados sólo con voz sintética local. Si no coinciden una vez se conserva cámara.",
   "allowed_assets": ["../Assets/Asset C.png", "../Assets/Asset E.png"],
   "camera_policy": {"fit": "contain", "x": 0.5, "y": 0.4},
   "subtitle_policy": {"font_size": 54, "margin_v": 270, "max_chars_per_line": 26},
@@ -18,42 +18,42 @@
     {
       "id": "estado", "purpose": "Explicar estado",
       "match_text": "estado en qué etapa", "until_text": "responsable quién sigue esto",
-      "min_read_seconds": 1.5, "asset": "../Assets/Asset E.png", "animation": "fade", "layout": "full",
+      "min_read_seconds": 1.5, "asset": "../Assets/Asset E.png", "animation": "none", "layout": "full",
       "focus_region": [0.035, 0.39, 0.225, 0.37], "approved": true, "fallback": "camera",
       "reason": "Aislar la definición de estado hasta que la voz pase a responsable"
     },
     {
       "id": "responsable", "purpose": "Explicar responsabilidad",
       "match_text": "responsable quién sigue esto", "until_text": "fecha cuándo revisar",
-      "min_read_seconds": 1.5, "asset": "../Assets/Asset E.png", "animation": "fade", "layout": "full",
+      "min_read_seconds": 1.5, "asset": "../Assets/Asset E.png", "animation": "none", "layout": "full",
       "focus_region": [0.27, 0.39, 0.225, 0.37], "approved": true, "fallback": "camera",
       "reason": "Aislar responsable mientras se explica quién sigue la consulta"
     },
     {
       "id": "fecha", "purpose": "Explicar revisión",
       "match_text": "fecha cuándo revisar", "until_text": "próxima acción qué hacer ahora",
-      "min_read_seconds": 1.5, "asset": "../Assets/Asset E.png", "animation": "fade", "layout": "full",
+      "min_read_seconds": 1.5, "asset": "../Assets/Asset E.png", "animation": "none", "layout": "full",
       "focus_region": [0.51, 0.39, 0.225, 0.37], "approved": true, "fallback": "camera",
       "reason": "Mostrar cuándo revisar sin confundir fecha con resultado"
     },
     {
       "id": "accion", "purpose": "Explicar siguiente paso",
       "match_text": "próxima acción qué hacer ahora", "until_text": "en este ejemplo ficticio",
-      "min_read_seconds": 1.5, "asset": "../Assets/Asset E.png", "animation": "fade", "layout": "full",
+      "min_read_seconds": 1.5, "asset": "../Assets/Asset E.png", "animation": "none", "layout": "full",
       "focus_region": [0.745, 0.39, 0.225, 0.37], "approved": true, "fallback": "camera",
       "reason": "Mostrar el cuarto campo hasta comenzar el ejemplo"
     },
     {
       "id": "ejemplo_estado", "purpose": "Relacionar estado y responsable en consulta demo",
       "match_text": "en este ejemplo ficticio", "until_text": "la próxima acción es llamar",
-      "min_read_seconds": 3, "asset": "../Assets/Asset C.png", "animation": "fade", "layout": "full",
+      "min_read_seconds": 3, "asset": "../Assets/Asset C.png", "animation": "none", "layout": "full",
       "demo": true, "focus_region": [0.495, 0.574, 0.153, 0.182], "approved": true, "fallback": "camera",
       "reason": "Ver seguimiento pendiente y Recepción; excluye nombre/contacto de la ilustración"
     },
     {
       "id": "ejemplo_accion", "purpose": "Mostrar acción concreta",
       "match_text": "la próxima acción es llamar", "until_text": "esto es una ilustración",
-      "min_read_seconds": 2, "asset": "../Assets/Asset C.png", "animation": "fade", "layout": "full",
+      "min_read_seconds": 2, "asset": "../Assets/Asset C.png", "animation": "none", "layout": "full",
       "demo": true, "focus_region": [0.267, 0.45, 0.225, 0.079], "approved": true, "fallback": "camera",
       "reason": "Llamar hoy 16:00 durante esa explicación; volver a cámara al interpretar"
     },

@@ -1,43 +1,40 @@
 # DentFlow AutoEditor V2 local
 
-Coloca `raw.mp4` en una carpeta Reel y ejecuta un BAT. Produce un borrador vertical
-con voz, subtítulos y un plan auditable. El modo editorial añade sólo imágenes
-propias declaradas y enlazadas a frases. Sin API, música automática, publicación,
-Watch en runtime ni suscripciones por render. **No validado para producción con
-dos grabaciones reales**: todavía no existen R1/R2 del iPhone en este checkout.
+Una grabación → montaje local → revisión, sin APIs de pago por render.
+**Faltan tus grabaciones iPhone R1/R2 para validar calidad editorial real.**
+La raíz ejecutable es `C:\auto-editor-dentflow`.
 
 ## Empezar en esta PC
 
-El HEAD recibido `e03cafbfd1cc403c124f1bf8ea9e2ef172064098` movió el proyecto de
-`dentflow/` a **esta raíz**. No ejecutes comandos desde otro árbol Flow.
-PowerShell, desde `C:\xampp\htdocs\tiago3roBTI2026\auto-editor-dentflow`:
+PowerShell desde esta raíz:
 
-```powershell
-.\install.bat
-.\editar_reel.bat --diagnose
-& "$env:LOCALAPPDATA\DentFlow\venv\Scripts\python.exe" -m unittest discover -s tests -v
-.\editar_reel.bat ".\contenido-dentflow\semana-1\Reel 1" --auto --preview
-.\editar_reel.bat ".\contenido-dentflow\semana-1\Reel 1" --auto
-.\editar_semana.bat ".\contenido-dentflow\semana-1" --auto
-```
+1. **Instalar:** `.\install.bat`.
+2. **Diagnosticar:** `.\editar_reel.bat --diagnose`. Debe indicar `status: passed` y código 0.
+3. **Colocar raw:** copia tu toma a `contenido-dentflow\semana-1\Reel 1\raw.mp4`.
+4. **Generar --plan-only:** `.\editar_reel.bat ".\contenido-dentflow\semana-1\Reel 1" --auto --plan-only`.
+5. **Preparar edicion.json con Codex:** entrega la carpeta Reel y su `Assets/manifest.json`.
+   Codex contrasta los triggers con la transcripción real y revisa el video con Watch local;
+   escribe el único `edicion.json`. R1 ya tiene plan C/E para el guion de abajo.
+6. **Preview:** `.\editar_reel.bat ".\contenido-dentflow\semana-1\Reel 1" --auto --preview`.
+7. **Final:** `.\editar_reel.bat ".\contenido-dentflow\semana-1\Reel 1" --auto`.
+8. **Encontrar output:** `Reel 1\OUTPUT\VIDEO_PREVIEW.mp4` (360×640) y
+   `VIDEO_BORRADOR.mp4` (1080×1920), con metadata `.json` e historial por fecha.
+9. **Corregir subtítulos:** copia `OUTPUT\fecha_hora\transcript.json` junto a raw;
+   cambia `words[].text`, conserva identidad/tiempos fuente y repite preview/final.
+10. **Procesar semana:** `.\editar_semana.bat ".\contenido-dentflow\semana-1" --auto`.
+    Reporte por pieza, SHA, resolución y errores en `semana-1\OUTPUT\lote_fecha.json`.
+11. **Recuperar errores:** revisa `OUTPUT\fecha_hora\render_log.txt` y `warnings.json`,
+    corrige y repite. Un fallo conserva ambos alias válidos. Si cambias raw, retira
+    el transcript anterior y genera uno nuevo con `--plan-only`.
 
-Los tres últimos comandos necesitan que hayas copiado `raw.mp4`. La carpeta
-`contenido-dentflow/semana-1/Reel 1` ya tiene un plan basado en C/E y el guion de
-abajo. El borrador aparece exactamente en
-`contenido-dentflow/semana-1/Reel 1/OUTPUT/VIDEO_BORRADOR.mp4`.
+**Siguiente paso único para R1: copiar raw.mp4.** Preview nunca pisa final.
+No publiques antes de revisar voz, ortografía, rostro, gráficos y lectura en teléfono.
 
-También puedes arrastrar **la carpeta** Reel sobre `editar_reel.bat` o pasar una
-ruta absoluta externa con espacios, sin mover tus archivos. `--preview` genera
-360×640 y también actualiza VIDEO_BORRADOR; ejecuta sin esa opción para obtener
-1080×1920. Se conserva cada versión en `OUTPUT/fecha_hora/FINAL.mp4` o PREVIEW.mp4.
-El alias se reemplaza atómicamente sólo después de validar el render.
-
-`install.bat` instala uv/Python 3.12 y dependencias fuera del repo en
-`%LOCALAPPDATA%\DentFlow\venv`; instala FFmpeg mediante winget si falta y descarga
-explícitamente el modelo base. Necesita red sólo en instalación/precalentamiento.
-Probado aquí: Ryzen 5 5600G, ~7.4 GiB RAM utilizable, Python 3.12.14,
-FFmpeg/ffprobe 9.0.2 con libass, faster-whisper 1.1.1 CPU/int8. No WhisperX.
-`--diagnose` verifica herramientas; no demuestra precisión de ASR.
+`install.bat` descubre uv/FFmpeg en PATH de proceso, usuario y máquina e instala
+faltantes con winget, sin ejecutar scripts remotos. Python/dependencias viven en
+`%LOCALAPPDATA%\DentFlow\venv`. Precalienta explícitamente base y luego lo carga
+offline. Diagnóstico prueba H.264/AAC/ASS, ffprobe, zscale, tonemap y decode;
+una capacidad requerida ausente devuelve fallo. No instala Node ni WhisperX.
 
 ## Flujo y contrato único
 
@@ -49,7 +46,8 @@ semana-1/
     edicion.json           opcional, única entrada editorial
     transcript.json        opcional, palabras corregidas en tiempo fuente
     OUTPUT/
-      VIDEO_BORRADOR.mp4
+      VIDEO_PREVIEW.mp4    preview 360×640
+      VIDEO_BORRADOR.mp4   final 1080×1920
       fecha_hora/          plan_edicion.json, transcript.json, warnings.json,
                            subtitulos.ass, render_log.txt, FINAL o PREVIEW.mp4
 ```
@@ -67,8 +65,8 @@ Para restaurar fuente íntegra quita `keep_segments` y usa esa opción.
 En V2 agrega `schema_version:2`, `mode:editorial|auto`, `script_summary`,
 `allowed_assets` (lista de rutas exactas), `beats`, `camera_policy`,
 `subtitle_policy`, `cut_policy`. El archivo [ejemplo](edicion.example.json)
-conserva eventos con tiempos explícitos; el [plan R1](contenido-dentflow/semana-1/Reel%201/edicion.json)
-usa frases de la locución. Los planes antiguos avisan que falta allowlist V2.
+muestra beats V2 sin aprobar hasta revisar el material; el [plan R1](contenido-dentflow/semana-1/Reel%201/edicion.json)
+usa frases de la locución. Los eventos temporales V1 requieren también allowed_assets; si falta, se omite el asset con aviso.
 
 - Cada beat necesita `id`, `purpose`, `reason`, `approved:true` para intervenir,
   `fallback:camera` y **sólo uno** entre `source_time:[inicio,fin]` o `match_text`.
@@ -93,15 +91,45 @@ usa frases de la locución. Los planes antiguos avisan que falta allowlist V2.
 `--plan-only` deja transcripción/plan sin render. Para corregir nombres, cifras,
 negaciones y puntuación, copia `OUTPUT/fecha_hora/transcript.json` junto a raw.mp4
 y cambia `words[].text`, conservando tiempos **del original**. Vuelve a ejecutar.
-Ese archivo tiene prioridad; la caché automática depende de SHA-256/configuración.
-Tras cambiar raw.mp4, retira o revalida cualquier transcript manual antiguo.
+El export incluye `schema_version:2`, `time_basis:source`, `source_sha256` y
+`source_duration`. El transcript manual prevalece sólo si esa identidad coincide;
+se rechaza después de cambiar raw. Solapamientos de hasta 20 ms se normalizan con
+aviso; desorden/solapamientos mayores se rechazan. No altera texto de cifras,
+negaciones, nombres ni CTA. Huecos sin palabras ni silencio medido generan aviso.
+
+Un transcript antiguo sin identidad exige revisión explícita de voz y tiempos:
+
+```powershell
+Get-FileHash ".\contenido-dentflow\semana-1\Reel 1\raw.mp4" -Algorithm SHA256
+.\editar_reel.bat ".\contenido-dentflow\semana-1\Reel 1" --migrate-transcript PEGAR_SHA256_REVISADO
+```
+
+Se conserva `transcript.legacy.json` sin sobrescribirlo. No se permite reasignar
+un transcript ya identificado a otro video. La caché ASR sigue vinculada a SHA/config.
+
+**Borrador editorial preparado con Codex:** interpretar la voz y decidir demos
+requiere preparación editorial; no surge de un clic offline sin modelo que
+comprenda el contenido. Codex puede preparar el JSON por ti. Después, renders
+locales sin Codex/Watch/conexión. Preset **DENTFLOW_EDUCATIVO**: problema concreto
+→ importancia → explicación → demostración propia → conclusión y próximo paso.
+Reglas comunes en config.yaml; no se modifica Python por guion.
+
+**R1 mantiene deliberadamente `cut_policy.mode:preserve`:** desactiva autocortes
+incluso con `--auto`, para preservar pausas de la primera demo. Cada unión de otros
+montajes se lista en `uniones_corte.json` con tiempo fuente/salida y ventana ±1 s.
+Intervenciones inválidas (allowlist, aprobación, cruce de corte) avisan y conservan cámara.
 
 ## Imagen, composición y audio
 
 `camera_policy` admite `fit:contain|cover` y punto de interés `x/y` entre 0 y 1.
 Contain conserva el encuadre; cover recorta y exige comprobar cara/manos.
 FFmpeg aplica metadatos de orientación, convierte a 30 fps y normaliza timestamps;
-VFR/rotación de un iPhone real todavía requieren comprobación.
+VFR/rotación se prueban con fixtures; iPhone real pendiente. Se registra ffprobe
+completo (color, HEVC, profundidad, cadencia, rotación y audio). HLG/PQ con BT.2020
+se convierte a luz lineal float, tonemapping Mobius y Rec.709. SDR no recibe tonemap.
+HDR sin colorimetría fiable falla con instrucción de exportar SDR. Fixtures HEVC
+10 bits HLG/PQ pasan; piel, blancos y saturación reales requieren revisión en teléfono.
+Referencia: [tonemap de FFmpeg](https://ffmpeg.org/ffmpeg-filters.html#tonemap).
 
 `layout:card` comparte cuadro; `full` sustituye visualmente la cámara durante la
 prueba. Con subtítulos, el gráfico ocupa como máximo hasta 69% del alto; la banda
@@ -118,7 +146,7 @@ No crea UI a partir de voz. El antiguo `reframe` sin `animated:true` sigue está
 `demo:true` añade EJEMPLO FICTICIO. Los textos se escapan en ASS; no son filtros FFmpeg.
 
 Subtítulos: blanco/contorno, máximo dos líneas, 26 caracteres por línea de inicio,
-fuente/tamaño/márgenes configurables. Reporta caracteres/s y caja geométrica estimada;
+fuente/tamaño/márgenes configurables. No fragmenta nombres/cifras o palabras largas; avisa de ancho excesivo. Reporta caracteres/s y caja geométrica estimada;
 rechaza configuraciones que invadan gráficos. No es medición tipográfica perfecta
 ni detección automática de boca/controles IG. Valida en tu teléfono.
 
@@ -126,7 +154,13 @@ Audio AAC 48 kHz, loudnorm inicial -16 LUFS/-1.5 dBTP de una pasada; silencio no
 normaliza. `audio.normalize:false` lo desactiva. Se miden pico/volumen medio/silencios
 fuente y salida; se avisa de fuente tenue o posible clipping. No repara micrófono
 saturado ni elimina automáticamente ruido. Cortes sin solapar sílabas.
-Export H.264 yuv420p, +faststart; valida duración, codecs, dimensiones y decode completo.
+Export H.264 yuv420p, +faststart; valida duración, codecs, dimensiones, FPS y decode
+completo; informa intervalos casi negros. Metadata por salida: tipo, resolución,
+SHA fuente/salida, timestamp, historial y validación técnica; `human_review:pending`.
+Alias reemplazados sólo después de validar y verificar que raw no cambió. Renders
+pequeños de tests no reciben alias de final 1080p. MP4/metadata se reemplazan
+individualmente de forma atómica: si hay interrupción entre ambos, comprobar
+`output_sha256` y recuperar metadata del historial.
 
 ## Primer Reel: guion original para grabar
 
@@ -151,7 +185,7 @@ la acción, excluyendo nombre/contacto. La interpretación vuelve a cámara. El 
 de conclusión queda **sin aprobar** hasta ver tu toma. CTA utilizable hoy, sin
 prometer una descarga inexistente, pacientes, ventas ni ingresos.
 
-Inspección visual de A–F realizada en esta sesión; [manifiesto](contenido-dentflow/semana-1/Assets/manifest.json):
+Inspección histórica A–F; en el cierre actual se reobservaron C/E y el render con B; [manifiesto](contenido-dentflow/semana-1/Assets/manifest.json):
 
 | Asset | Qué explica | Límite editorial |
 |---|---|---|
@@ -162,7 +196,9 @@ Inspección visual de A–F realizada en esta sesión; [manifiesto](contenido-de
 | E | Estado, responsable, fecha, próxima acción | Un bloque por frase para leer en vertical |
 | F | Conversaciones dispersas sin siguiente paso claro | Omitir si sólo repite la voz |
 
-## Evidencia, checkpoints y límites
+## Evidencia HISTÓRICA, checkpoints y límites
+
+Los recuentos de esta sección provienen de commits anteriores. Ejecución actual al final.
 
 **A — `83db49b`**: git limpio, fetch/pull ff-only y comparación con `7082841`.
 7/7 tests V1 antes de modificar el motor (3.89 s, cuatro renders). Primer intento
@@ -215,11 +251,11 @@ interpretar (R01 32–34, R02 32–34); ausencia de zoom periódico (R06 15–16
 montaje antes de adornos (T02 179); foco de UI y jerarquía (T08 105, T06 103).
 No se copiaron frases, imágenes ni diseños de referentes a los assets DentFlow.
 
-**FFmpeg suficiente por ahora.** Sin Node/Remotion incorporado. La [FAQ oficial de
-licencia](https://www.remotion.dev/docs/license/faq) revisada 29-09-2026 permite uso
-comercial/automatización gratuito a individuos y equipos de hasta tres personas,
-sujeto a términos; vuelve a revisar si participan clientes que operan el código.
-No se justifica una prueba React antes de validar dos tomas propias.
+**FFmpeg suficiente por ahora.** Remotion queda diferido hasta evaluar R1/R2 reales.
+Sólo ante una composición que lo justifique: POC aislado de 10–15 s con el mismo
+JSON/timeline, export consumible por FFmpeg y fallback. Antes de integrarlo,
+verificar documentación/licencia vigente, RAM/rendimiento y aprobación de complejidad.
+No se agregó React/Node a la instalación principal.
 
 Runtime fuerza modelo offline, HF_HUB_OFFLINE y desactiva telemetría Hugging Face;
 no importa Watch ni SDKs comerciales. Instalación y estudio sí descargan. Para
@@ -231,3 +267,67 @@ Antes de publicar: ver completo, escuchar uniones/voz, corregir cifras y negacio
 comprobar móvil y que cada demo explique algo. Si falla claridad, cambia el plan
 o la grabación, no agregues efectos. Falta validación real R1/R2 y escucha humana;
 el software y el procedimiento ya no dependen de otra investigación.
+
+
+## Cierre ejecutado el 29/09/2026 en esta PC
+
+- HEAD inicial actualizado por fetch/pull ff-only: `35e139138e8686c5551bcd1698e706697f5703b3`.
+  Sin diferencias respecto a la referencia. Sin raw iPhone en el checkout.
+- Base: 24 descubiertas, 23 ejecutadas/aprobadas, 1 ASR opt-in omitida, 0 fallos (85,435 s).
+- Cierre: 30 descubiertas, 30 ejecutadas/aprobadas, 0 omitidas, 0 fallos (110,561 s).
+  ASR opt-in usó voz SAPI local con `socket.connect` bloqueado. No demuestra precisión
+  de la voz del fundador. CI añadida, todavía no ejecutada en GitHub (sin push).
+- Windows real: Python 3.12.14, uv, FFmpeg/ffprobe 9.0.1, faster-whisper 1.1.1;
+  precalentamiento y diagnóstico offline aprobados. No se simuló una reinstalación
+  en una VM virgen. Incluye pruebas de rutas con espacios, ñ y apóstrofos.
+- Regresiones: final 1080p → preview → fallos preservan ambos SHA; transcript/migración;
+  HDR PQ/HLG; VFR/rotación; PNG finito, alpha, MP4 offset, cortes/remapeo, zoom/retorno,
+  sin audio/ASR fallida; ASS/Unicode; allowlist/traversal/no aprobado/fallback.
+- Lote de cinco probado por BAT: cinco correctos; después cuatro correctos y un fallo
+  controlado, preservando el MP4 previo. Reporte JSON con estado/SHA/resolución.
+- Fixtures sólo en TemporaryDirectory o nueva raíz marcada de aceptación.
+  `DENTFLOW_VALIDATION` ya no elige carpeta de escritura. Colisión raw rechazada.
+
+Artefactos sintéticos de esta sesión (no publicar como grabaciones reales):
+
+```text
+C:\Users\User\AppData\Local\DentFlow\validacion_v2\editorial_20260929_161332_274497\Reel 1\OUTPUT\VIDEO_PREVIEW.mp4
+C:\Users\User\AppData\Local\DentFlow\validacion_v2\editorial_20260929_161332_274497\Reel 1\OUTPUT\VIDEO_BORRADOR.mp4
+C:\Users\User\AppData\Local\DentFlow\validacion_v2\editorial_20260929_161332_274497\Reel 2\OUTPUT\VIDEO_BORRADOR.mp4
+```
+
+R1: 50,93 s, siete eventos C/E; R2: 22,60 s, asset B y otro tema, mismo motor.
+Watch local/backend none: se leyeron las 39 imágenes de R1 y las 9 de R2 del informe
+preview. R1: hook 0–3,5; E estado 12,90–15,98, responsable 15,98–19,20,
+fecha 19,20–21,98, acción 21,98–25,06; C estado/responsable 25,06–31,10,
+acción 31,10–35,04; retorno 35,09. R2: B 7,10–15,26, retorno 15,31.
+Los recortes C ocultan nombre/contacto y muestran Seguimiento pendiente/Recepción/
+Llamar hoy 16:00; E muestra un campo a la vez, separado de subtítulos. Primera revisión de fades
+antes/durante/después; se ajustó R1 a corte directo entre campos consecutivos. No zoom aprobado en R1; el test comprueba retorno.
+Informes y fotogramas están en `watch/` de esa misma raíz de validación.
+
+No se afirma escucha humana íntegra, reproducción en teléfono, piel/gestos reales
+ni aptitud profesional. Ambos fixtures conservan voz íntegra sin uniones; las
+uniones sintéticas se verifican también por amplitud de audio en la suite. Falta
+material real del fundador y su revisión humana para cerrar la aceptación audiovisual.
+
+```powershell
+& "$env:LOCALAPPDATA\DentFlow\venv\Scripts\python.exe" -m unittest discover -s tests -v
+$env:DENTFLOW_ASR_SAMPLE = "$env:LOCALAPPDATA\DentFlow\validacion_v2\editorial_20260929_161332_274497\Reel 1\raw.mp4"
+& "$env:LOCALAPPDATA\DentFlow\venv\Scripts\python.exe" -m unittest discover -s tests -v
+```
+
+
+Calibración editorial de cierre: blackdetect señaló 31,0667–31,1333 s (dos fotogramas)
+en R1 al encadenar salida/entrada de fades. Se corrigió **edicion.json**, sin tocar
+Python: campos consecutivos usan `animation:none`, regla reutilizable del preset;
+las tarjetas independientes pueden conservar fade (R2). CTA R2 corregido sólo en
+su transcript (`Revisar/comprobar` → `Revisá/comprobá`) contra el guion SAPI.
+Además de previews se inspeccionaron tres cuadros de raw sintético, diez del final
+R1 (incluyendo CTA 46/48,5 s), cuatro de R2 y dos del CTA corregido 18,5/20,6 s.
+
+Semana persistente: `semana_cinco/` dentro de la raíz de validación anterior;
+cinco raw sintéticos distintos, cinco previews, reportes de 5/0 y 4/1 en OUTPUT.
+Las cinco carpetas quedaron válidas; `semana_cinco_evidence.json` registra los cinco
+SHA preservados tras el fallo. `qa_outputs.json` y `evidence/` guardan diagnóstico,
+pruebas y comprobaciones de outputs. No se agregan estos MP4 ni transcripts a Git.

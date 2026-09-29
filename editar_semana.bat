@@ -7,7 +7,7 @@ if not exist "%DF_PY%" (
   exit /b 1
 )
 if "%~1"=="" (
-  echo Arrastra una carpeta Reel sobre este archivo o pasala como argumento.
+  echo Arrastra una carpeta de semana con carpetas Reel o pasala como argumento.
   exit /b 1
 )
 "%DF_PY%" "%~dp0src\editor.py" %* --week --config "%~dp0config.yaml"

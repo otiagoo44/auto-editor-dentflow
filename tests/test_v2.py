@@ -34,6 +34,11 @@ def fixture(folder, duration=12, audio=False):
 
 
 class AutoTests(unittest.TestCase):
+    def test_invalid_cut_policy_rejected(self):
+        from planning import policies
+        with self.assertRaisesRegex(ValueError, 'auto_min_gap_seconds'):
+            policies({'cut_policy': {'auto_min_gap_seconds': 7, 'auto_max_gap_seconds': 3}}, config())
+
     def test_final_preview_and_failed_render_preserve_aliases(self):
         with tempfile.TemporaryDirectory(prefix="Alias ñ O'Brien ") as td:
             folder=Path(td)
@@ -294,6 +299,25 @@ def center_pixel(path, t):
 
 
 class AcceptanceTests(unittest.TestCase):
+    def test_adjacent_graphics_no_blank_frame_at_fractional_boundary(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder=Path(td)
+            e.run(['ffmpeg','-v','error','-n','-f','lavfi','-i','color=c=red:s=180x320:r=30:d=3',
+                   '-c:v','libx264','-threads','1',folder/'raw.mp4'])
+            for color in ('lime','blue'):
+                e.run(['ffmpeg','-v','error','-n','-f','lavfi','-i',f'color=c={color}:s=180x320',
+                       '-frames:v','1','-threads','1',folder/(color+'.png')])
+            e.write_json(folder/'edicion.json',dict(schema_version=2,allowed_assets=['lime.png','blue.png'],events=[
+                dict(type='asset',file='lime.png',start=.2,end=1.28,approved=True,layout='full',animation='none',reason='Primero'),
+                dict(type='asset',file='blue.png',start=1.28,end=2.5,approved=True,layout='full',animation='none',reason='Segundo')]))
+            cfg=config();cfg['subtitles']['enabled']=False
+            final=e.process_reel(folder,cfg)
+            for t in (1.20,1.233334,1.266667):
+                self.assertGreater(center_pixel(final,t)[1],200,f'PNG termina antes del evento: {t}')
+            for t in (1.30,2.40,2.466667):
+                self.assertGreater(center_pixel(final,t)[2],200,f'PNG termina antes del evento: {t}')
+            self.assertLess(center_pixel(final,2.6)[2],200)
+
     def test_hdr_pq_hlg_hevc_to_sdr_and_no_sdr_tonemap(self):
         with tempfile.TemporaryDirectory(prefix="HDR ñ O'Brien ") as td:
             folder=Path(td)

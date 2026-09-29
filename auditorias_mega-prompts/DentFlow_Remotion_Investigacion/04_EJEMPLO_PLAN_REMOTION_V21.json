@@ -1,0 +1,60 @@
+{
+  "_nota": "ESQUEMA PROPUESTO AÚN NO SOPORTADO POR EL REPO ACTUAL. Uso conceptual para implementación posterior a V2. No copiar encima de edicion.json real sin validar el nuevo parser.",
+  "schema_version": 2,
+  "mode": "editorial",
+  "source": "raw.mp4",
+  "script_summary": "Mostrar seguimiento de consulta desde estado a próxima acción con datos ficticios.",
+  "render": {
+    "engine": "remotion",
+    "template": "educativo",
+    "music": {"enabled": false, "file": null, "rights_declared": false},
+    "captions": "remotion"
+  },
+  "allowed_assets": ["../Assets/Asset C.png", "../Assets/Asset E.png"],
+  "camera_policy": {"fit": "contain", "x": 0.5, "y": 0.4},
+  "cut_policy": {"mode": "conservative"},
+  "beats": [
+    {
+      "id": "hook_consultas",
+      "purpose": "Abrir con problema concreto",
+      "match_text": "cuántas consultas siguen abiertas",
+      "duration": 3.5,
+      "animation": "HOOK_TEXT",
+      "template": "QuestionHook",
+      "text": "¿Qué consultas siguen abiertas?",
+      "approved": true,
+      "fallback": "camera",
+      "reason": "Introduce la pregunta sin prometer resultados"
+    },
+    {
+      "id": "estados",
+      "purpose": "Hacer legible el campo Estado",
+      "match_text": "estado en qué etapa",
+      "until_text": "responsable quién sigue esto",
+      "min_read_seconds": 1.5,
+      "asset": "../Assets/Asset E.png",
+      "animation": "fade",
+      "template": "CRMHighlight",
+      "focus_region": [0.035, 0.39, 0.225, 0.37],
+      "approved": true,
+      "fallback": "camera",
+      "reason": "Aísla el campo del gráfico autorizado sincronizado con la voz"
+    },
+    {
+      "id": "demo_accion",
+      "purpose": "Mostrar una acción siguiente ilustrativa",
+      "match_text": "la próxima acción es llamar",
+      "until_text": "esto es una ilustración",
+      "min_read_seconds": 2,
+      "asset": "../Assets/Asset C.png",
+      "animation": "fade",
+      "template": "ScreenshotFocus",
+      "layout": "full",
+      "focus_region": [0.267, 0.45, 0.225, 0.079],
+      "demo": true,
+      "approved": true,
+      "fallback": "camera",
+      "reason": "Mostrar sólo el siguiente paso, nunca datos clínicos"
+    }
+  ]
+}

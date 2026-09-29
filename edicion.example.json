@@ -1,27 +1,45 @@
 {
   "schema_version": 2,
+  "preset": "DENTFLOW_EDUCATIVO",
+  "mode": "editorial",
   "source": "raw.mp4",
-  "allowed_assets": ["../Assets/demo-propia.mp4"],
-  "events": [
+  "script_summary": "Problema → importancia → explicación → demostración → conclusión y próximo paso. Adaptar triggers a la voz real.",
+  "allowed_assets": [
+    "../Assets/demo-propia.png"
+  ],
+  "camera_policy": {
+    "fit": "contain",
+    "x": 0.5,
+    "y": 0.4
+  },
+  "cut_policy": {
+    "mode": "preserve"
+  },
+  "subtitle_policy": {
+    "font_size": 54,
+    "margin_v": 270,
+    "max_chars_per_line": 26
+  },
+  "beats": [
     {
-      "type": "asset",
-      "file": "../Assets/demo-propia.mp4",
-      "approved": true,
-      "start": 8,
-      "end": 13,
-      "offset": 0,
+      "id": "demostracion",
+      "purpose": "Leer el siguiente paso de un ejemplo ficticio",
+      "match_text": "la próxima acción es llamar",
+      "until_text": "esto es una ilustración",
+      "min_read_seconds": 3,
+      "asset": "../Assets/demo-propia.png",
+      "focus_region": [
+        0.25,
+        0.35,
+        0.5,
+        0.3
+      ],
       "layout": "full",
-      "reason": "Mostrar cómo cambia de pendiente a confirmado al explicar ese paso"
-    },
-    {
-      "type": "reframe",
-      "approved": true,
-      "start": 16,
-      "end": 19,
-      "scale": 1.08,
-      "x": 0.5,
-      "y": 0.4,
-      "reason": "Destacar una conclusión; revisar que el recorte conserve ojos y manos"
+      "animation": "fade",
+      "demo": true,
+      "approved": false,
+      "fallback": "camera",
+      "reason": "Aprobar tras revisar asset autorizado, encuadre y frase real; no selecciona por keywords"
     }
   ]
 }

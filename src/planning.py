@@ -27,10 +27,12 @@ def region(value):
 
 
 def asset_path(file, folder, roots=()):
+    if not isinstance(file, str) or re.match(r'^[a-zA-Z][a-zA-Z0-9+.-]*://', file):
+        raise ValueError('Asset debe ser una ruta local, nunca una URL.')
     path = (folder / file).resolve()
     safe_roots = [folder.resolve(), (folder.parent / 'Assets').resolve()]
     safe_roots += [(folder / p).resolve() for p in roots]
-    if any(p.casefold() in ('research', 'videos_estudiar') for p in path.parts):
+    if any(p.casefold() in ('research', 'videos_estudiar', 'auditorias_mega-prompts', '.git') for p in path.parts):
         raise ValueError('Los materiales de investigación no se usan como assets.')
     if not any(path.is_relative_to(root) for root in safe_roots):
         raise ValueError('Asset fuera del Reel/Assets de la semana o asset_roots explícitos.')
@@ -166,3 +168,5 @@ def policies(spec, cfg):
     for key,lo,hi in [('auto_min_gap_seconds',1.2,10), ('auto_max_gap_seconds',1.2,20), ('max_removed_fraction',0,.4)]:
         if key in cuts:
             cfg['cuts'][key] = bounded(cuts[key],lo,hi,key)
+    if cfg['cuts'].get('auto_min_gap_seconds', 1.8) > cfg['cuts'].get('auto_max_gap_seconds', 6):
+        raise ValueError('auto_min_gap_seconds debe ser <= auto_max_gap_seconds.')

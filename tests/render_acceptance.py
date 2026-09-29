@@ -64,7 +64,7 @@ def make_reel(folder, text):
         text='PRUEBA SINTÉTICA\nVoz local, sin cámara real')])
     fixture_ass = folder/'fixture.ass'
     fixture_ass.write_text(fixture_ass.read_text(encoding='utf-8').replace(r'\pos(540.0,230.4)', r'\pos(540.0,672.0)'), encoding='utf-8')
-    e.run(['ffmpeg','-v','error','-y','-f','lavfi','-i',f'color=c=0x1f2937:s=1080x1920:r=30:d={length}',
+    e.run(['ffmpeg','-v','error','-n','-f','lavfi','-i',f'color=c=0x1f2937:s=1080x1920:r=30:d={length}',
            '-i',speech,'-vf','ass=fixture.ass','-c:v','libx264','-threads','2','-preset','ultrafast',
            '-pix_fmt','yuv420p','-c:a','aac','-shortest',folder/'raw.mp4'],cwd=folder)
     return cfg
@@ -74,7 +74,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--final', action='store_true')
     args = parser.parse_args()
-    week = Path(os.environ['LOCALAPPDATA'])/'DentFlow/validacion_v2'/datetime.now().strftime('editorial_%Y%m%d_%H%M%S')
+    week = Path(os.environ['LOCALAPPDATA'])/'DentFlow/validacion_v2'/datetime.now().strftime('editorial_%Y%m%d_%H%M%S_%f')
+    week.mkdir(parents=True,exist_ok=False)
+    (week/'.dentflow-synthetic-fixtures').write_text('Sólo fixtures sintéticos; sin grabación personal.',encoding='utf-8')
     one, two = week/'Reel 1', week/'Reel 2'
     assets = week/'Assets'
     assets.mkdir(parents=True)
@@ -94,9 +96,9 @@ def main():
                  until_text='esto es un esquema',asset='../Assets/Asset B.png',layout='full',focus_region=[.545,.3,.415,.62],
                  animation='fade',approved=True,reason='Mostrar sólo el panel control de B',fallback='camera')]))
     command = [str(ROOT/'editar_semana.bat'),str(week),'--auto']
-    if not args.final:
-        command += ['--preview']
-    subprocess.run(command,check=True)
+    subprocess.run(command+['--preview'],check=True)
+    if args.final:
+        subprocess.run(command,check=True)
     for reel in (one,two):
         output = reel/'OUTPUT'
         plans = sorted(output.glob('*/plan_edicion.json'))

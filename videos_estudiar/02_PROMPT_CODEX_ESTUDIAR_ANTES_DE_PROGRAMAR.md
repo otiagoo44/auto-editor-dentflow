@@ -1,4 +1,10 @@
-# MISIÓN ÚNICA PARA CODEX: auditoría audiovisual real con Watch — NO IMPLEMENTAR AÚN EL EDITOR
+# HISTÓRICO / NO EJECUTAR
+
+Este encargo de investigación fue reemplazado por la V2. No bloquea programación
+ni solicita repetir análisis. Evidencia vigente: [CSV](../Flow/Herramientas/DentFlow_AutoEditor/research/evidencia.csv)
+y [operación actual](../README.md). El texto original debajo se conserva sólo como archivo histórico.
+
+# Antigua misión: auditoría audiovisual real con Watch — NO IMPLEMENTAR AÚN EL EDITOR
 
 Estás en el proyecto local `Flow` de DentFlow. El usuario ya instaló la skill **watch** desde `bradautomates/claude-video`. Comprueba que está disponible en esta sesión e inspecciona su `SKILL.md`. Usa el archivo `01_REFERENCIAS_10_TUTORIALES_Y_10_REFERENTES.json` adjunto: contiene 10 tutoriales seleccionados y diez materiales nuevos de cinco referentes (8 Instagram, un YouTube de Tomi y una VSL propia que puede requerir reemplazo).
 

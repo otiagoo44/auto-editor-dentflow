@@ -521,7 +521,7 @@ def render_final(cut, ass, events, out, cfg, temp, duration):
             fades = (f"fade=t=in:st=0:d={fade}:alpha=1,fade=t=out:st={dur-fade:.6f}:d={fade}:alpha=1,"
                      if ev.get('animation', 'fade') != 'none' else '')
             filters.append(f"[{index}:v]trim=duration={dur:.6f},setpts=PTS-STARTPTS,"
-                           f"fps={v['fps']},{crop}scale={aw}:{ah}:force_original_aspect_ratio=decrease:force_divisible_by=2,"
+                           f"fps={v['fps']},tpad=stop_mode=clone:stop_duration={2/v['fps']:.6f},{crop}scale={aw}:{ah}:force_original_aspect_ratio=decrease:force_divisible_by=2,"
                            f"pad={aw}:{ah}:(ow-iw)/2:(oh-ih)/2:color=0x111827,setsar=1,format=rgba,"
                            f"{fades}"
                            f"setpts=PTS+{start:.6f}/TB[asset{n}]")
