@@ -1,15 +1,25 @@
 $ErrorActionPreference = 'Stop'
 $repoDir = Split-Path $PSScriptRoot -Parent
-$uvExe = Join-Path $env:USERPROFILE '.local\bin\uv.exe'
-if (-not (Test-Path -LiteralPath $uvExe)) {
-    Invoke-RestMethod https://astral.sh/uv/install.ps1 | Invoke-Expression
+function Refresh-ToolPath {
+    $env:Path = $env:Path + ';' + [Environment]::GetEnvironmentVariable('Path', 'User') + ';' + [Environment]::GetEnvironmentVariable('Path', 'Machine')
 }
-$env:Path = [Environment]::GetEnvironmentVariable('Path', 'User') + ';' + $env:Path
-if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+Refresh-ToolPath
+if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
+    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) { throw 'Falta winget: instala App Installer y vuelve a ejecutar install.bat.' }
+    # Paquete del gestor; nunca ejecutar texto de scripts remotos con Invoke-Expression.
+    winget install --id astral-sh.uv --exact --silent --accept-package-agreements --accept-source-agreements
+    if ($LASTEXITCODE) { throw 'No se pudo instalar uv mediante winget.' }
+    Refresh-ToolPath
+}
+$uvCommand = Get-Command uv -ErrorAction Stop
+$uvExe = $uvCommand.Source
+if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue) -or -not (Get-Command ffprobe -ErrorAction SilentlyContinue)) {
     winget install --id Gyan.FFmpeg --exact --silent --accept-package-agreements --accept-source-agreements
     if ($LASTEXITCODE) { throw 'No se pudo instalar FFmpeg.' }
-    $env:Path = [Environment]::GetEnvironmentVariable('Path', 'User') + ';' + $env:Path
+    Refresh-ToolPath
 }
+Get-Command ffmpeg, ffprobe -ErrorAction Stop | Out-Null
+$env:PYTHONUTF8 = '1'
 $envDir = Join-Path $env:LOCALAPPDATA 'DentFlow\venv'
 $pythonExe = Join-Path $envDir 'Scripts\python.exe'
 if (-not (Test-Path -LiteralPath $pythonExe)) {

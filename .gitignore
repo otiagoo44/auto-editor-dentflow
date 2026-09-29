@@ -11,4 +11,14 @@ OUTPUT/
 .venv/
 .cache/
 .env
+.env.*
+!.env.example
+models/
+transcript*.json
+*.m4v
+*.webm
+*.aac
+*.flac
+*.pem
+*.key
 *.partial.*
