@@ -17,7 +17,11 @@ transcription:
   language: es
   threads: 2
 cuts:
-  # Sólo sugerencias. Aprobar usando keep_segments en edicion.json.
+  # --auto exige silencio medido + final de frase; keep_segments explícito manda.
+  auto_enabled: true
+  auto_min_gap_seconds: 1.8
+  auto_max_gap_seconds: 6.0
+  max_removed_fraction: 0.25
   gap_to_suggest_seconds: 1.2
   keep_before_seconds: 0.20
   keep_after_seconds: 0.30

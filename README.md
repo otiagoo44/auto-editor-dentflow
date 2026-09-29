@@ -1,4 +1,21 @@
-# DentFlow AutoEditor V1
+# DentFlow AutoEditor V2 local
+
+## Checkpoint B — borrador automático
+
+`--auto` ya produce `Reel/OUTPUT/VIDEO_BORRADOR.mp4`. Sólo reemplaza esa copia
+tras verificar duración, H.264/AAC 48 kHz, resolución y decodificación completa;
+preserva los renders con timestamp. `--preview` genera 360×640 (también actualiza
+el borrador); sin esa opción genera 1080×1920. El modo auto requiere final de
+frase, pausa larga y silencio medido para cortar; protege eventos explícitos,
+conserva inicio/final y no supera 25% eliminado. No garantiza conservar gestos.
+`--no-auto-cuts` desactiva esos cortes; `keep_segments` explícito tiene prioridad.
+Sin audio audible o ante fallo ASR conserva cámara limpia y avisa, sin inventar
+texto. Cada corrida entrega plan, transcript, ASS, warnings y render_log.
+
+Pruebas ejecutadas: 11/11 (6.25 s); ASR activada sin pista, baseline auto de 12 s,
+fallo ASR, protección de demo y de la última salida ante fallo de render.
+Borrador sintético persistido en `%LOCALAPPDATA%\DentFlow\validacion_v2\Reel 1\OUTPUT\VIDEO_BORRADOR.mp4`.
+Es patrón de prueba sin voz, no una grabación tuya ni validación profesional.
 
 ## Estado de preparación — 29-09-2026, checkpoint A
 

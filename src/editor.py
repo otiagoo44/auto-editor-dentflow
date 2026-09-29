@@ -1,5 +1,6 @@
 from __future__ import annotations
 import argparse
+import copy
 import hashlib
 import json
 import math
@@ -94,6 +95,9 @@ def validate_words(data, duration):
 
 def transcribe_worker(source, dest, cfg):
     # Worker separado: devuelve la RAM del modelo antes del render.
+    if cfg.get("offline", True):
+        os.environ["HF_HUB_OFFLINE"] = "1"
+        os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
     from faster_whisper import WhisperModel
     model = WhisperModel(cfg["model"], device="cpu", compute_type="int8",
                          cpu_threads=cfg.get("threads", 2), num_workers=1,
@@ -129,6 +133,60 @@ def get_words(source, folder, out, cfg, duration, digest):
     data["key"] = key
     write_json(cache, data)
     return words, "faster-whisper local"
+
+
+def audio_analysis(source, duration):
+    if not any(s["codec_type"] == "audio" for s in probe(source)["streams"]):
+        return {"audible": False, "peak_db": None, "mean_db": None, "silences": [[0, duration]]}
+    scan = subprocess.run(["ffmpeg", "-hide_banner", "-i", str(source), "-vn", "-af",
+                           "volumedetect,silencedetect=noise=-42dB:d=0.35", "-f", "null", "-"],
+                          capture_output=True, text=True, encoding="utf-8", errors="replace")
+    if scan.returncode:
+        raise RuntimeError("No se pudo analizar audio: revisa codecs de la fuente.")
+    def db(field):
+        match = re.search(field + r": ([-\w.]+) dB", scan.stderr)
+        value = float(match[1]) if match else None
+        return value if value is not None and math.isfinite(value) else None
+    peak, mean = db("max_volume"), db("mean_volume")
+    silences, begin = [], None
+    for match in re.finditer(r"silence_(start|end): ([\d.]+)", scan.stderr):
+        if match[1] == "start":
+            begin = float(match[2])
+        elif begin is not None:
+            silences.append([begin, float(match[2])])
+            begin = None
+    if begin is not None:
+        silences.append([begin, duration])
+    return {"audible": peak is not None and peak > -65, "peak_db": peak,
+            "mean_db": mean, "silences": silences}
+
+
+def auto_keep_segments(words, duration, cfg, audio, protected=()):
+    """Sólo huecos largos, tras fin de frase, corroborados por silencio real."""
+    c = cfg["cuts"]
+    if not words or not audio["audible"] or not c.get("auto_enabled", True):
+        return [(0, duration)]
+    removals = []
+    for previous, following in zip(words, words[1:]):
+        gap = following.start - previous.end
+        if not c.get("auto_min_gap_seconds", 1.8) <= gap <= c.get("auto_max_gap_seconds", 6):
+            continue
+        if not re.search(r"[.!?]$", previous.text):
+            continue
+        a = previous.end + max(.35, c["keep_after_seconds"])
+        b = following.start - max(.25, c["keep_before_seconds"])
+        if any(a < y and b > x for x, y in protected):
+            continue
+        if any(x <= a and b <= y for x, y in audio["silences"]):
+            removals.append((a, b))
+    if sum(b-a for a,b in removals) > duration * c.get("max_removed_fraction", .25):
+        return [(0, duration)]
+    kept, start = [], 0.
+    for a, b in removals:
+        kept.append((start, a))
+        start = b
+    kept.append((start, duration))
+    return kept
 
 
 def validate_ranges(ranges, duration, fps):
@@ -250,7 +308,7 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
 """
     for start, end, text in captions:
         # Texto no puede introducir instrucciones ASS.
-        text = text.replace("\\", "").replace("{", "(").replace("}", ")").replace("\n", r"\N")
+        text = text.replace("\\", "").replace("{", "(").replace("}", ")").replace("\r", " ").replace("\n", r"\N")
         content += f"Dialogue: 0,{ass_time(start)},{ass_time(end)},Default,,0,0,0,,{text}\n"
     path.write_text(content, encoding="utf-8")
 
@@ -397,41 +455,66 @@ def render_final(cut, ass, events, out, cfg, temp, duration):
     run(cmd, cwd=temp)
 
 
-def process_reel(folder, cfg, plan_only=False, preview=False):
+def process_reel(folder, cfg, plan_only=False, preview=False, auto=False):
     started = time.monotonic()
+    cfg = copy.deepcopy(cfg)
+    # Ningún render descarga modelos: la instalación es la única etapa con red.
+    cfg["transcription"]["offline"] = True
+    if preview:
+        cfg["video"].update(width=360, height=640, preset="veryfast", crf=24)
     folder = folder.resolve()
     spec = read_json(folder / "edicion.json") if (folder / "edicion.json").exists() else {}
     source = (folder / spec["source"]).resolve() if "source" in spec else choose_source_video(folder)
     duration, digest = ffprobe_duration(source), fingerprint(source)
     output = folder / "OUTPUT"
     output.mkdir(exist_ok=True)
-    words, transcript_source = get_words(source, folder, output, cfg, duration, digest)
+    run_dir = output / datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    run_dir.mkdir()
+    warnings = ["Revisar manualmente nombres, cifras, negaciones y sincronía."]
+    audio = audio_analysis(source, duration)
+    if not audio["audible"]:
+        words, transcript_source = [], "Sin audio audible; ASR omitida"
+        warnings.append("Sin audio audible: cámara limpia, sin subtítulos ni autocortes.")
+    else:
+        try:
+            words, transcript_source = get_words(source, folder, output, cfg, duration, digest)
+        except RuntimeError:
+            words, transcript_source = [], "ASR local falló"
+            warnings.append("ASR local falló: ejecutar install.bat o corregir transcript.json; se conserva cámara sin subtítulos.")
+        if audio["peak_db"] is not None and audio["peak_db"] >= -.1:
+            warnings.append("Pico fuente cercano a 0 dBFS: posible clipping, escuchar. Normalizar no repara distorsión.")
+        if audio["mean_db"] is not None and audio["mean_db"] < -35:
+            warnings.append("Audio fuente tenue: revisar micrófono y ruido antes de publicar.")
     fps = cfg["video"]["fps"]
     suggested = validate_ranges(build_keep_segments(words, duration, cfg), duration, fps)
-    # Por defecto conserva las pausas; las sugerencias se aprueban copiando a keep_segments.
-    keep = validate_ranges(spec.get("keep_segments", [[0, duration]]), duration, fps)
+    automatic = auto or spec.get("mode") == "auto"
+    protected = [(ev["start"], ev["end"]) for ev in spec.get("events", [])]
+    default_keep = auto_keep_segments(words, duration, cfg, audio, protected) if automatic else [(0, duration)]
+    keep = validate_ranges(spec.get("keep_segments", default_keep), duration, fps)
     validate_cut_boundaries(words, keep)
     events = prepare_events(spec.get("events", []), keep, folder, duration)
     captions = make_captions(words, keep, cfg) if cfg["subtitles"]["enabled"] else []
-    run_dir = output / datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    run_dir.mkdir()
     mapping, offset = [], 0.0
     for a, b in keep:
         mapping.append({"source_start": a, "source_end": b, "output_start": offset, "output_end": offset+b-a})
         offset += b-a
-    warnings = ["Revisar manualmente nombres, cifras, negaciones y sincronía."]
     if not words:
         warnings.append("Sin palabras: no hay subtítulos; no implica que el audio no tenga voz.")
     for a,b,t in captions:
         if len(t.replace("\n", " ")) / (b-a) > cfg["subtitles"]["warn_chars_per_second"]:
             warnings.append(f"Lectura rápida: {a:.2f}–{b:.2f}s; revisar frase/pausa.")
-    plan = dict(version=1, source=str(source), sha256=digest, transcript_source=transcript_source,
+    plan = dict(version=2, mode="auto" if automatic else "editorial", source=str(source), sha256=digest, transcript_source=transcript_source,
                 source_duration=duration, output_duration=offset, keep_segments=keep,
                 suggested_keep_segments=suggested, time_map=mapping, events=events,
                 captions=[dict(start=a,end=b,text=t) for a,b,t in captions], warnings=warnings,
-                config=cfg, preview=preview, status="plan")
+                config=cfg, audio_analysis=audio, preview=preview, status="plan")
     write_json(run_dir / "plan_edicion.json", plan)
     write_json(run_dir / "transcript.json", {"words": [asdict(w) for w in words]})
+    write_json(run_dir / "warnings.json", warnings)
+    log = run_dir / "render_log.txt"
+    log.write_text(f"DentFlow V2 | modo {plan['mode']} | {'preview' if preview else 'final'}\n"
+                   f"Fuente: {duration:.3f}s; montaje: {offset:.3f}s; tramos: {len(keep)}\n"
+                   f"Transcripción: {transcript_source}\n" + "\n".join(warnings) + "\n", encoding="utf-8")
     write_ass(captions, run_dir / "subtitulos.ass", cfg)
     print(f"Plan: {run_dir}", flush=True)
     if plan_only:
@@ -442,14 +525,27 @@ def process_reel(folder, cfg, plan_only=False, preview=False):
         cut = render_cut_video(source, keep, temp, cfg)
         partial = run_dir / "render.partial.mp4"
         render_final(cut, temp / "subtitulos.ass", events, partial, cfg, temp, offset)
-        measured = ffprobe_duration(partial)
+        rendered = probe(partial)
+        measured = float(rendered["format"]["duration"])
         if abs(measured - offset) > max(.15, 2 / fps):
             raise RuntimeError(f"Duración inesperada: {measured} vs {offset}")
+        video = next(s for s in rendered["streams"] if s["codec_type"] == "video")
+        sound = next(s for s in rendered["streams"] if s["codec_type"] == "audio")
+        if (video["width"], video["height"], video["codec_name"], sound["codec_name"], sound["sample_rate"]) != (
+                cfg["video"]["width"], cfg["video"]["height"], "h264", "aac", "48000"):
+            raise RuntimeError("Exportación no cumple resolución/codecs esperados.")
+        run(["ffmpeg", "-v", "error", "-xerror", "-i", partial, "-f", "null", "-"])
         final = run_dir / ("PREVIEW.mp4" if preview else "FINAL.mp4")
         partial.rename(final)
     plan.update(status="rendered", rendered_duration=measured,
                 elapsed_seconds=round(time.monotonic()-started, 2), file=str(final))
     write_json(run_dir / "plan_edicion.json", plan)
+    # Reemplazo atómico dentro del mismo volumen, solamente tras validar el render.
+    latest_temp = output / (run_dir.name + ".partial.mp4")
+    shutil.copyfile(final, latest_temp)
+    latest_temp.replace(output / "VIDEO_BORRADOR.mp4")
+    with log.open("a", encoding="utf-8") as f:
+        f.write(f"OK: {final.name}; {measured:.3f}s; {plan['elapsed_seconds']}s de proceso.\n")
     print(f"LISTO: {final}", flush=True)
     return final
 
@@ -458,12 +554,14 @@ def main():
     if len(sys.argv) > 1 and sys.argv[1] == "--asr-worker":
         transcribe_worker(Path(sys.argv[2]), Path(sys.argv[3]), read_json(Path(sys.argv[4])))
         return
-    ap = argparse.ArgumentParser(description="DentFlow V1 local: plan, subtítulos y montaje explícito.")
+    ap = argparse.ArgumentParser(description="DentFlow V2 local: raw.mp4 a OUTPUT/VIDEO_BORRADOR.mp4, sin APIs.")
     ap.add_argument("target", nargs="?", type=Path)
     ap.add_argument("--config", type=Path, default=ROOT / "config.yaml")
     ap.add_argument("--week", action="store_true")
     ap.add_argument("--plan-only", action="store_true")
     ap.add_argument("--preview", action="store_true")
+    ap.add_argument("--auto", action="store_true", help="Cortes conservadores corroborados por silencio; sin assets inventados.")
+    ap.add_argument("--no-auto-cuts", action="store_true", help="Conserva pausas; keep_segments explícitos tienen prioridad.")
     ap.add_argument("--diagnose", action="store_true")
     ap.add_argument("--warmup", action="store_true", help="Descarga inicial explicita del modelo; luego usar offline.")
     args = ap.parse_args()
@@ -489,6 +587,8 @@ def main():
         if not shutil.which(binary):
             ap.error(f"Falta {binary} en PATH.")
     cfg = yaml.safe_load(args.config.read_text(encoding="utf-8-sig"))
+    if args.no_auto_cuts:
+        cfg["cuts"]["auto_enabled"] = False
     if args.preview:
         cfg["video"].update(width=360, height=640, preset="veryfast", crf=24)
     targets = [args.target]
@@ -500,7 +600,7 @@ def main():
     failures = 0
     for target in targets:
         try:
-            process_reel(target, cfg, args.plan_only, args.preview)
+            process_reel(target, cfg, args.plan_only, args.preview, args.auto)
         except Exception as exc:
             failures += 1
             print(f"ERROR {target}: {exc}", file=sys.stderr, flush=True)
