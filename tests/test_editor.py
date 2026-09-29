@@ -77,7 +77,7 @@ class RenderTests(unittest.TestCase):
                    "color=c=blue:s=180x320:r=30:d=2","-c:v","libx264","-threads","1",folder/"demo.mp4"])
             e.run(["ffmpeg","-loglevel","error","-y","-f","lavfi","-i",
                    "color=c=lime:s=100x100","-frames:v","1","-threads","1",folder/"card.png"])
-            e.write_json(folder/"edicion.json",dict(source="raw.mp4",keep_segments=[[0,2],[3,6]],events=[
+            e.write_json(folder/"edicion.json",dict(source="raw.mp4",allowed_assets=['card.png','demo.mp4'],keep_segments=[[0,2],[3,6]],events=[
                 dict(type="asset",file="card.png",approved=True,start=.5,end=1.5,reason="tarjeta",layout="full"),
                 dict(type="asset",file="demo.mp4",approved=True,start=4,end=5.5,reason="demostración",layout="full")]))
             final = e.process_reel(folder,cfg)
@@ -100,14 +100,15 @@ class RenderTests(unittest.TestCase):
             self.assertNotEqual(final,final2)
             # Reencuadre explícito + ASS; el corte no debe suprimir una palabra breve.
             cfg["subtitles"]["enabled"] = True
-            e.write_json(folder/"transcript.json", {"words": [dict(start=.1,end=.5,text="Sí."),
-                         dict(start=.6,end=.95,text="Agenda.")]})
+            e.write_json(folder/"transcript.json", e.transcript_document([e.Word(.1,.5,'Sí.'),
+                         e.Word(.6,.95,'Agenda.')],e.fingerprint(folder/'raw.mp4'),6))
             e.write_json(folder/"edicion.json", dict(source="raw.mp4",keep_segments=[[0,1]],events=[
                 dict(type="reframe",start=.55,end=.98,scale=1.1,reason="énfasis")]))
             final3=e.process_reel(folder,cfg)
             self.assertTrue(final3.exists())
             # Fuente sin pista de audio: añade silencio, no falla el mapeo 0:a.
             e.write_json(folder/"edicion.json", dict(source="demo.mp4",keep_segments=[[0,1]]))
+            (folder/'transcript.json').unlink()  # Sólo fixture; otra fuente exige otro transcript.
             final4=e.process_reel(folder,cfg)
             self.assertTrue(any(s["codec_type"] == "audio" for s in e.probe(final4)["streams"]))
 

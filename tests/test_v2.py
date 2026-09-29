@@ -24,7 +24,9 @@ def config():
 
 def fixture(folder, duration=12, audio=False):
     folder.mkdir(parents=True, exist_ok=True)
-    cmd = ['ffmpeg', '-v', 'error', '-y', '-f', 'lavfi', '-i',
+    if (folder/'raw.mp4').exists():
+        raise ValueError('Fixture no puede sobrescribir raw.mp4 existente.')
+    cmd = ['ffmpeg', '-v', 'error', '-n', '-f', 'lavfi', '-i',
            f'testsrc2=s=180x320:r=30:d={duration}']
     if audio:
         cmd += ['-f', 'lavfi', '-i', f'sine=frequency=330:sample_rate=48000:duration={duration}', '-c:a', 'aac']
@@ -32,6 +34,104 @@ def fixture(folder, duration=12, audio=False):
 
 
 class AutoTests(unittest.TestCase):
+    def test_final_preview_and_failed_render_preserve_aliases(self):
+        with tempfile.TemporaryDirectory(prefix="Alias ñ O'Brien ") as td:
+            folder=Path(td)
+            fixture(folder,1)
+            cfg=config()
+            cfg['video'].update(width=1080,height=1920)
+            e.process_reel(folder,cfg,auto=True)
+            final=folder/'OUTPUT/VIDEO_BORRADOR.mp4'
+            digest=e.fingerprint(final)
+            e.process_reel(folder,cfg,auto=True,preview=True)
+            preview=folder/'OUTPUT/VIDEO_PREVIEW.mp4'
+            prev_digest=e.fingerprint(preview)
+            self.assertEqual(e.fingerprint(final),digest)
+            for name,size in [('VIDEO_BORRADOR',[1080,1920]),('VIDEO_PREVIEW',[360,640])]:
+                meta=e.read_json(folder/f'OUTPUT/{name}.json')
+                self.assertEqual(meta['resolution'],size)
+                self.assertEqual(meta['source_sha256'],e.fingerprint(folder/'raw.mp4'))
+                self.assertEqual(meta['output_sha256'],e.fingerprint(folder/f'OUTPUT/{name}.mp4'))
+                self.assertEqual(meta['validation'],'probe+full_decode_passed')
+            for is_preview in (False,True):
+                with patch.object(e,'render_final',side_effect=RuntimeError('fallo simulado')):
+                    with self.assertRaises(RuntimeError):
+                        e.process_reel(folder,cfg,preview=is_preview)
+                self.assertEqual(e.fingerprint(final),digest)
+                self.assertEqual(e.fingerprint(preview),prev_digest)
+
+    def test_transcript_identity_migration_and_word_overlap(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder=Path(td)
+            fixture(folder,2,audio=True)
+            path=folder/'transcript.json'
+            legacy=dict(words=[dict(start=.1,end=.8,text='No 16:00.')])
+            e.write_json(path,legacy)
+            digest=e.fingerprint(folder/'raw.mp4')
+            with self.assertRaisesRegex(ValueError,'sin identidad'):
+                e.process_reel(folder,config(),plan_only=True)
+            with self.assertRaises(ValueError):
+                e.migrate_transcript(folder,'0'*64)
+            e.migrate_transcript(folder,digest)
+            result=e.process_reel(folder,config(),plan_only=True)
+            exported=e.read_json(result/'transcript.json')
+            self.assertEqual(exported['source_sha256'],digest)
+            self.assertEqual(e.read_json(folder/'transcript.legacy.json'),legacy)
+            with self.assertRaisesRegex(ValueError,'otra fuente'):
+                e.validate_transcript_identity(exported,'0'*64,2)
+            with self.assertRaisesRegex(ValueError,'otra fuente'):
+                e.validate_transcript_identity(exported,digest,3)
+            with self.assertRaisesRegex(ValueError,'otra fuente'):
+                e.validate_transcript_identity(dict(exported,source_duration=float('nan')),digest,2)
+            # Incluso sin voz: no reutilizar un transcript de otra fuente.
+            changed=dict(exported,source_sha256='0'*64)
+            e.write_json(path,changed)
+            with patch.object(e,'audio_analysis',return_value=dict(audible=False)):
+                with self.assertRaisesRegex(ValueError,'otra fuente'):
+                    e.process_reel(folder,config(),plan_only=True)
+        for bad in ([dict(start=1,end=2,text='No'),dict(start=.9,end=1.5,text='12')],
+                    [dict(start=0,end=1,text='No'),dict(start=.9,end=2,text='12')]):
+            with self.assertRaises(ValueError):
+                e.validate_words(bad,3)
+        warnings=[]
+        words=e.validate_words([dict(start=0,end=1,text='No'),dict(start=.99,end=2,text='12.')],3,warnings)
+        self.assertEqual(words[1].start,1)
+        self.assertEqual(words[1].text,'12.')
+        self.assertTrue(warnings)
+        self.assertEqual(e.lines_for('electroencefalografista1234567890',26),['electroencefalografista1234567890'])
+
+    def test_fixture_collision_and_environment_cannot_select_production(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder=Path(td)
+            source=folder/'raw.mp4'
+            source.write_bytes(b'VIDEO PERSONAL NO TOCAR')
+            with patch.dict(os.environ,DENTFLOW_VALIDATION=str(folder)):
+                with self.assertRaisesRegex(ValueError,'sobrescribir'):
+                    fixture(folder)
+            self.assertEqual(source.read_bytes(),b'VIDEO PERSONAL NO TOCAR')
+
+    def test_diagnose_fails_missing_required_capability(self):
+        with patch.object(e.shutil,'which',return_value=None):
+            self.assertFalse(e.diagnose(config()))
+        with patch.object(e,'run',return_value=' ass '):
+            self.assertFalse(e.diagnose(config()))
+
+    def test_invalid_editorial_interventions_fall_back_to_camera(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder=Path(td)
+            fixture(folder,3)
+            for event in [dict(type='asset',file='../../secret.png',approved=True,start=0,end=1,reason='fuera'),
+                          dict(type='asset',file='missing.png',approved=True,reason='sin tiempos'),
+                          dict(type='reframe',approved=False,start=0,end=1,reason='no aprobado'),
+                          dict(type='reframe',approved=True,start=.5,end=2.5,reason='cruza corte')]:
+                e.write_json(folder/'edicion.json',dict(schema_version=2,allowed_assets=[],
+                    keep_segments=[[0,1],[2,3]],events=[event]))
+                output=e.process_reel(folder,config(),plan_only=True)
+                plan=e.read_json(output/'plan_edicion.json')
+                self.assertEqual(plan['events'],[])
+                self.assertTrue(any('fallback=camera' in w for w in plan['warnings']))
+                self.assertEqual(plan['cut_joins'][0]['output_time'],1)
+
     def test_empty_audio_with_asr_on(self):
         with tempfile.TemporaryDirectory(prefix='DentFlow ñ sin audio ') as td:
             folder = Path(td)
@@ -42,12 +142,12 @@ class AutoTests(unittest.TestCase):
             self.assertEqual(plan['captions'], [])
             self.assertEqual(plan['events'], [])
             self.assertIn('Sin audio', plan['transcript_source'])
-            self.assertTrue((folder/'OUTPUT/VIDEO_BORRADOR.mp4').exists())
+            self.assertTrue(final.exists())
 
     def test_auto_baseline(self):
-        # Persistir un artefacto visible sólo cuando se solicita explícitamente.
+        # Nunca tomar una raíz de fixtures desde variables de entorno.
         with tempfile.TemporaryDirectory(prefix="DentFlow prueba ñ O'Brien ") as td:
-            folder = Path(os.environ.get('DENTFLOW_VALIDATION', td))/'Reel 1'
+            folder = Path(td)/'Reel 1'
             fixture(folder)
             final = e.process_reel(folder, config(), auto=True, preview=True)
             plan = e.read_json(final.parent/'plan_edicion.json')
@@ -55,11 +155,11 @@ class AutoTests(unittest.TestCase):
             self.assertEqual(plan['events'], [])
             self.assertAlmostEqual(e.ffprobe_duration(final), 12, delta=.1)
             # Fallar un render posterior nunca reemplaza la última salida válida.
-            digest = e.fingerprint(folder/'OUTPUT/VIDEO_BORRADOR.mp4')
+            digest = e.fingerprint(folder/'OUTPUT/VIDEO_PREVIEW.mp4')
             with patch.object(e, 'render_final', side_effect=RuntimeError('fallo simulado')):
                 with self.assertRaises(RuntimeError):
                     e.process_reel(folder, config(), auto=True)
-            self.assertEqual(digest, e.fingerprint(folder/'OUTPUT/VIDEO_BORRADOR.mp4'))
+            self.assertEqual(digest, e.fingerprint(folder/'OUTPUT/VIDEO_PREVIEW.mp4'))
             repeat = e.process_reel(folder, config(), auto=True, preview=True)
             self.assertEqual(e.fingerprint(final), e.fingerprint(repeat))
 
@@ -67,10 +167,13 @@ class AutoTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             folder = Path(td)
             fixture(folder, 2, audio=True)
+            e.write_json(folder/'edicion.json',dict(schema_version=2,keep_segments=[[0,1]],events=[
+                dict(type='text',text='No debe aparecer',start=0,end=1,approved=True,reason='No hay ASR fiable')]))
             with patch.object(e, 'get_words', side_effect=RuntimeError('modelo ausente')):
                 final = e.process_reel(folder, config(), auto=True)
             plan = e.read_json(final.parent/'plan_edicion.json')
             self.assertEqual(plan['captions'], [])
+            self.assertEqual(plan['events'], [])
             self.assertEqual(plan['keep_segments'], [[0, 2]])
             self.assertIn('ASR local falló', plan['transcript_source'])
 
@@ -130,6 +233,8 @@ class EditorialTests(unittest.TestCase):
             self.assertEqual(len(e.prepare_events([event],[(0,4)],reel,4,[event['file']],strict=True)),1)
             with self.assertRaisesRegex(ValueError,'allowed_assets'):
                 e.prepare_events([event],[(0,4)],reel,4,[],strict=True)
+            with self.assertRaisesRegex(ValueError,'allowed_assets'):
+                e.prepare_events([event],[(0,4)],reel,4)  # V1 no evade allowlist.
             for forbidden in ['../../semana 2/Assets/propio.png','../../secreto.png','research/demo.png','../Assets/falta.png']:
                 with self.assertRaises(ValueError):
                     asset_path(forbidden,reel)
@@ -176,7 +281,7 @@ class EditorialTests(unittest.TestCase):
                 events=[dict(type='asset',file=str(asset),start=1,end=4,approved=True,demo=True,layout='full',
                              focus_region=[.445,.572,.252,.2],reason='Mostrar estado y responsable'),
                         dict(type='reframe',start=4.5,end=7.5,scale=1.07,animated=True,approved=True,reason='Énfasis')]))
-            e.write_json(folder/'transcript.json',dict(words=[dict(start=1,end=3,text='Ejemplo ficticio.')]))
+            e.write_json(folder/'transcript.json',e.transcript_document([e.Word(1,3,'Ejemplo ficticio.')],e.fingerprint(folder/'raw.mp4'),8))
             final = e.process_reel(folder,config(),preview=True)
             self.assertAlmostEqual(e.ffprobe_duration(final),8,delta=.1)
             self.assertIn('EJEMPLO FICTICIO',(final.parent/'subtitulos.ass').read_text(encoding='utf-8'))
@@ -189,6 +294,27 @@ def center_pixel(path, t):
 
 
 class AcceptanceTests(unittest.TestCase):
+    def test_hdr_pq_hlg_hevc_to_sdr_and_no_sdr_tonemap(self):
+        with tempfile.TemporaryDirectory(prefix="HDR ñ O'Brien ") as td:
+            folder=Path(td)
+            for transfer in ('arib-std-b67','smpte2084'):
+                # Fixture generado en espacio SDR y convertido a HDR, no sólo retagged.
+                raw=folder/(transfer+'.mp4')
+                vf=('format=yuv420p,zscale=pin=bt709:tin=bt709:min=bt709:rin=limited:'
+                    f'p=bt2020:t={transfer}:m=bt2020nc:r=limited,format=yuv420p10le')
+                e.run(['ffmpeg','-v','error','-n','-f','lavfi','-i','testsrc2=s=180x320:r=30:d=1',
+                       '-vf',vf,'-c:v','libx265','-threads','1','-x265-params','pools=1:frame-threads=1',
+                       '-color_primaries','bt2020','-color_trc',transfer,'-colorspace','bt2020nc',raw])
+                e.write_json(folder/'edicion.json',dict(source=raw.name))
+                final=e.process_reel(folder,config())
+                stream=next(s for s in e.probe(final)['streams'] if s['codec_type']=='video')
+                self.assertEqual((stream['color_transfer'],stream['color_primaries'],stream['pix_fmt']),('bt709','bt709','yuv420p'))
+                self.assertIn('tonemap=',e.read_json(final.parent/'plan_edicion.json')['color_conversion'])
+                self.assertGreater(sum(center_pixel(final,.5)),30)
+            self.assertNotIn('tonemap',e.color_filter(dict(color_transfer='bt709',color_space='bt709',color_primaries='bt709')))
+            with self.assertRaisesRegex(ValueError,'HDR sin'):
+                e.color_filter(dict(color_transfer='smpte2084'))
+
     def test_animated_punch_really_moves_and_returns(self):
         with tempfile.TemporaryDirectory() as td:
             folder=Path(td)
@@ -214,7 +340,7 @@ class AcceptanceTests(unittest.TestCase):
             root=Path(td)
             folder=root/'Reel 1'
             fixture(folder,2,audio=True)
-            e.write_json(folder/'transcript.json',dict(words=[dict(start=.2,end=1.8,text='W'*26)]))
+            e.write_json(folder/'transcript.json',e.transcript_document([e.Word(.2,1.8,'W'*26)],e.fingerprint(folder/'raw.mp4'),2))
             cfg=config()
             cfg['content_root']=str(root)
             path=root/'config.yaml'
@@ -252,7 +378,7 @@ class AcceptanceTests(unittest.TestCase):
             e.write_json(folder/'edicion.json',dict(schema_version=2,allowed_assets=['wide.png','wide.mp4'],
                 keep_segments=[[0,1.5],[2,3.5],[4,6]],events=[
                     dict(type='asset',file='wide.png',start=.2,end=1.2,approved=True,layout='full',reason='PNG'),
-                    dict(type='asset',file='wide.mp4',start=4.2,end=5.5,approved=True,layout='full',reason='MP4')]))
+                    dict(type='asset',file='wide.mp4',offset=.5,start=4.2,end=5.5,approved=True,layout='full',reason='MP4')]))
             final=e.process_reel(folder,cfg)
             self.assertAlmostEqual(e.ffprobe_duration(final),5,delta=.07)
             before,fade,mid,after,clip,done=[center_pixel(final,t) for t in (.1,.2667,.7,1.4,3.8,4.8)]
@@ -285,8 +411,8 @@ class AcceptanceTests(unittest.TestCase):
                    '-c:v','libx264','-threads','1','-c:a','aac',folder/'source.mp4'])
             e.run(['ffmpeg','-v','error','-y','-i',folder/'source.mp4','-c','copy',
                    '-metadata:s:v:0','rotate=90',folder/'raw.mp4'])
-            e.write_json(folder/'transcript.json',dict(words=[dict(start=.2,end=.9,text='No.'),
-                                                            dict(start=3.3,end=3.7,text='12.'),dict(start=4,end=4.5,text='Consultas.')]))
+            e.write_json(folder/'transcript.json',e.transcript_document([e.Word(.2,.9,'No.'),
+                e.Word(3.3,3.7,'12.'),e.Word(4,4.5,'Consultas.')],e.fingerprint(folder/'raw.mp4'),e.ffprobe_duration(folder/'raw.mp4')))
             final=e.process_reel(folder,config(),auto=True)
             plan=e.read_json(final.parent/'plan_edicion.json')
             self.assertEqual(len(plan['keep_segments']),2)
@@ -320,8 +446,8 @@ class AcceptanceTests(unittest.TestCase):
             cmd=[str(ROOT/'editar_semana.bat'),str(week),'--auto','--preview']
             good=subprocess.run(cmd,capture_output=True)
             self.assertEqual(good.returncode,0,good.stderr)
-            one=week/'Reel 1/OUTPUT/VIDEO_BORRADOR.mp4'
-            two=week/'Reel 2/OUTPUT/VIDEO_BORRADOR.mp4'
+            one=week/'Reel 1/OUTPUT/VIDEO_PREVIEW.mp4'
+            two=week/'Reel 2/OUTPUT/VIDEO_PREVIEW.mp4'
             self.assertGreater(center_pixel(one,1)[2],200)
             self.assertGreater(center_pixel(two,1)[1],200)
             # Ampliación a cinco: tres correctos adicionales; uno se hace fallar después.
@@ -335,7 +461,10 @@ class AcceptanceTests(unittest.TestCase):
             self.assertEqual(failed.returncode,1)
             self.assertIn(b'4 correctos; 1 fallidos',failed.stdout)
             self.assertEqual(previous,e.fingerprint(two))
-            self.assertTrue((week/'Reel 5/OUTPUT/VIDEO_BORRADOR.mp4').exists())
+            self.assertTrue((week/'Reel 5/OUTPUT/VIDEO_PREVIEW.mp4').exists())
+            report=e.read_json(sorted((week/'OUTPUT').glob('lote_*.json'))[-1])
+            self.assertEqual((report['passed'],report['failed']),(4,1))
+            self.assertEqual(report['results'][0]['metadata']['resolution'],[360,640])
             plan_only=subprocess.run([str(ROOT/'editar_reel.bat'),str(week/'Reel 1'),'--plan-only'],capture_output=True)
             self.assertEqual(plan_only.returncode,0,plan_only.stderr)
 

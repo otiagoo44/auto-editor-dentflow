@@ -25,10 +25,12 @@ IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp"}
 # Winget actualiza el PATH de usuario, pero una terminal ya abierta no lo hereda.
 if sys.platform == "win32":
     import winreg
-    with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment") as _key:
+    for _hive, _path in ((winreg.HKEY_CURRENT_USER, 'Environment'),
+                         (winreg.HKEY_LOCAL_MACHINE, r'SYSTEM\CurrentControlSet\Control\Session Manager\Environment')):
         try:
-            os.environ["PATH"] += os.pathsep + os.path.expandvars(winreg.QueryValueEx(_key, "Path")[0])
-        except FileNotFoundError:
+            with winreg.OpenKey(_hive, _path) as _key:
+                os.environ["PATH"] = os.environ.get('PATH', '') + os.pathsep + os.path.expandvars(winreg.QueryValueEx(_key, "Path")[0])
+        except OSError:
             pass
 
 
@@ -83,15 +85,38 @@ class Word:
     text: str
 
 
-def validate_words(data, duration):
+def validate_words(data, duration, warnings=None):
     words = [Word(float(w["start"]), float(w["end"]), str(w["text"]).strip()) for w in data]
-    prev = -1.0
+    prev = 0.0
     for w in words:
         if not (math.isfinite(w.start) and math.isfinite(w.end)
-                and 0 <= w.start < w.end <= duration + 0.05 and w.start >= prev and w.text):
+                and 0 <= w.start < w.end <= duration + 0.05 and w.text):
             raise ValueError(f"Palabra o tiempo inválido: {w}")
-        prev = w.start
+        # Hasta 20 ms de redondeo ASR; no reordenar ni inventar palabras.
+        if w.start < prev:
+            if prev-w.start > .020001 or prev >= w.end:
+                raise ValueError(f'Palabras solapadas o desordenadas: {w}; revisar tiempos fuente.')
+            if warnings is not None:
+                warnings.append(f'Redondeo temporal <=20 ms normalizado en {w.start:.3f}s.')
+            w.start = prev
+        w.end = min(w.end, duration)
+        if w.end <= w.start:
+            raise ValueError('Palabra fuera de la duración de fuente.')
+        prev = w.end
     return words
+
+
+def transcript_document(words, digest, duration):
+    return dict(schema_version=2, time_basis='source', source_sha256=digest,
+                source_duration=duration, words=[asdict(w) for w in words])
+
+
+def validate_transcript_identity(data, digest, duration):
+    if data.get('schema_version') != 2 or data.get('time_basis') != 'source' or not data.get('source_sha256'):
+        raise ValueError('transcript.json sin identidad V2. Revisa voz/tiempos y usa --migrate-transcript SHA256_ACTUAL explícitamente.')
+    saved_duration = float(data.get('source_duration', -1))
+    if data['source_sha256'] != digest or not math.isfinite(saved_duration) or abs(saved_duration-duration) > .05:
+        raise ValueError('transcript.json pertenece a otra fuente (SHA/duración). Retíralo y ejecuta --plan-only; no se reutiliza.')
 
 
 def transcribe_worker(source, dest, cfg):
@@ -110,11 +135,12 @@ def transcribe_worker(source, dest, cfg):
     write_json(dest, {"words": words, "language": info.language, "backend": "faster-whisper-local"})
 
 
-def get_words(source, folder, out, cfg, duration, digest):
+def get_words(source, folder, out, cfg, duration, digest, warnings=None):
     corrected = folder / "transcript.json"
     if corrected.exists():
         data = read_json(corrected)
-        return validate_words(data["words"], duration), "transcript.json (usuario)"
+        validate_transcript_identity(data, digest, duration)
+        return validate_words(data["words"], duration, warnings), "transcript.json (usuario)"
     if not cfg["transcription"]["enabled"]:
         return [], "desactivada"
     cache = out / "transcript_cache.json"
@@ -122,7 +148,7 @@ def get_words(source, folder, out, cfg, duration, digest):
     if cache.exists():
         data = read_json(cache)
         if data.get("key") == key:
-            return validate_words(data["words"], duration), "cache local"
+            return validate_words(data["words"], duration, warnings), "cache local"
     with tempfile.TemporaryDirectory(prefix="dentflow_asr_") as td:
         dest = Path(td) / "transcript.json"
         options = Path(td) / "cfg.json"
@@ -130,7 +156,7 @@ def get_words(source, folder, out, cfg, duration, digest):
         print("Transcripción local: modelo " + cfg["transcription"]["model"], flush=True)
         run([sys.executable, Path(__file__), "--asr-worker", source, dest, options])
         data = read_json(dest)
-    words = validate_words(data["words"], duration)
+    words = validate_words(data["words"], duration, warnings)
     data["key"] = key
     write_json(cache, data)
     return words, "faster-whisper local"
@@ -245,7 +271,8 @@ def validate_cut_boundaries(words, keep):
 
 def lines_for(text, limit):
     lines, current = [], ""
-    tokens = [part for word in text.split() for part in [word[i:i+limit] for i in range(0, len(word), limit)]]
+    # No fragmentar nombres, cifras ni palabras largas: se diagnostica su ancho.
+    tokens = text.split()
     for token in tokens:
         if current and len(current) + 1 + len(token) > limit:
             lines.append(current)
@@ -332,7 +359,7 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
 
 def prepare_events(specs, keep, folder, duration, allowed_assets=None, roots=(), strict=False):
     events = []
-    allowed = {asset_path(name, folder, roots) for name in allowed_assets} if allowed_assets is not None else None
+    allowed = {asset_path(name, folder, roots) for name in (allowed_assets or [])}
     for spec in specs:
         ev = dict(spec)
         if ev.get('time_basis', 'source') != 'source' or any(k in ev for k in ('output_time', 'output_start', 'output_end')):
@@ -353,7 +380,7 @@ def prepare_events(specs, keep, folder, duration, allowed_assets=None, roots=(),
             if ev.get("approved") is not True:
                 raise ValueError("Asset requiere approved:true (propio o autorizado).")
             p = asset_path(ev['file'], folder, roots)
-            if allowed is not None and p not in allowed:
+            if p not in allowed:
                 raise ValueError(f'Asset no incluido en allowed_assets del Reel: {p.name}')
             if p.suffix.lower() not in IMAGE_EXTS | VIDEO_EXTS or not p.is_file():
                 raise ValueError(f"Asset local no válido: {p}")
@@ -406,9 +433,25 @@ def fit_filter(cfg):
     raise ValueError("video.fit debe ser contain o cover.")
 
 
+def color_filter(stream):
+    """HDR -> luz lineal float -> tono/gamut -> Rec.709; SDR no usa tonemap."""
+    transfer = stream.get('color_transfer')
+    if transfer in ('arib-std-b67', 'smpte2084'):
+        if stream.get('color_primaries') != 'bt2020' or stream.get('color_space') not in ('bt2020nc', 'bt2020c'):
+            raise ValueError('HDR sin primarias/matriz BT.2020 fiables: exporta SDR Rec.709 desde el iPhone.')
+        return ('zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,'
+                'tonemap=tonemap=mobius:desat=2,zscale=t=bt709:m=bt709:r=limited,format=yuv420p,')
+    primaries, matrix = stream.get('color_primaries'), stream.get('color_space')
+    if primaries not in (None, 'unknown') and matrix not in (None, 'unknown', 'gbr') and transfer not in (None, 'unknown'):
+        return 'zscale=p=bt709:t=bt709:m=bt709:r=limited,format=yuv420p,'
+    return ''  # SDR sin tags: no atribuirle HDR ni transformar con una curva inventada.
+
+
 def render_cut_video(source, keep, temp, cfg):
     v = cfg["video"]
-    has_audio = any(s["codec_type"] == "audio" for s in probe(source)["streams"])
+    streams = probe(source)['streams']
+    has_audio = any(s["codec_type"] == "audio" for s in streams)
+    colors = color_filter(next(s for s in streams if s['codec_type'] == 'video'))
     paths = []
     for i, (a, b) in enumerate(keep):
         part = temp / f"part_{i:03d}.mkv"
@@ -417,10 +460,11 @@ def render_cut_video(source, keep, temp, cfg):
         if not has_audio:
             cmd += ["-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo"]
         cmd += ["-map", "0:v:0", "-map", "0:a:0" if has_audio else "1:a:0",
-                "-vf", f"setpts=PTS-STARTPTS,fps={v['fps']}," + fit_filter(cfg) + ",tpad=stop_mode=clone:stop_duration=1",
+                "-vf", f"setpts=PTS-STARTPTS,fps={v['fps']}," + colors + fit_filter(cfg) + ",tpad=stop_mode=clone:stop_duration=1",
                 "-af", f"asetpts=PTS-STARTPTS,aresample=48000,apad,atrim=duration={dur:.6f}",
                 "-t", f"{dur:.6f}", "-c:v", "libx264", "-threads", str(v["threads"]),
                 "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p",
+                "-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709",
                 "-c:a", "pcm_s16le", "-ar", "48000", "-ac", "2", part]
         run(cmd)
         paths.append(part)
@@ -470,10 +514,10 @@ def render_final(cut, ass, events, out, cfg, temp, duration):
                     current = f'[bg{n}]'
             dur = end-start
             fade = min(.15, dur/4)
-            crop = ''
+            crop = color_filter(next(s for s in probe(path)['streams'] if s['codec_type'] == 'video')) if path.suffix.lower() in VIDEO_EXTS else ''
             if 'focus_region' in ev:
                 rx,ry,rw,rh = ev['focus_region']
-                crop = f'crop=iw*{rw}:ih*{rh}:iw*{rx}:ih*{ry},'
+                crop += f'crop=iw*{rw}:ih*{rh}:iw*{rx}:ih*{ry},'
             fades = (f"fade=t=in:st=0:d={fade}:alpha=1,fade=t=out:st={dur-fade:.6f}:d={fade}:alpha=1,"
                      if ev.get('animation', 'fade') != 'none' else '')
             filters.append(f"[{index}:v]trim=duration={dur:.6f},setpts=PTS-STARTPTS,"
@@ -504,6 +548,7 @@ def render_final(cut, ass, events, out, cfg, temp, duration):
             "-af", af, "-t", f"{duration:.6f}", "-r", str(v["fps"]),
             "-c:v", "libx264", "-threads", str(v["threads"]), "-preset", v["preset"],
             "-crf", str(v["crf"]), "-pix_fmt", "yuv420p", "-c:a", "aac", "-ar", "48000",
+            "-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709",
             "-b:a", "160k", "-movflags", "+faststart", out]
     run(cmd, cwd=temp)
 
@@ -517,7 +562,7 @@ def process_reel(folder, cfg, plan_only=False, preview=False, auto=False):
     try:
         return _process_reel(folder, cfg, plan_only, preview, auto, run_dir)
     except Exception as exc:
-        message = f'ERROR recuperable: {exc}\nÚltimo VIDEO_BORRADOR conservado.\n'
+        message = f'ERROR recuperable: {exc}\nÚltimos VIDEO_BORRADOR y VIDEO_PREVIEW conservados.\n'
         with (run_dir/'render_log.txt').open('a', encoding='utf-8') as f:
             f.write(message)
         plan_file = run_dir/'plan_edicion.json'
@@ -540,19 +585,32 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir):
     policies(spec, cfg)
     source = (folder / spec["source"]).resolve() if "source" in spec else choose_source_video(folder)
     duration, digest = ffprobe_duration(source), fingerprint(source)
+    source_probe = probe(source)
+    source_video = next(s for s in source_probe['streams'] if s['codec_type'] == 'video')
+    colors = color_filter(source_video)
     output = folder / "OUTPUT"
     output.mkdir(exist_ok=True)
     warnings = ["Revisar manualmente nombres, cifras, negaciones y sincronía."]
+    if 'tonemap=' in colors:
+        warnings.append('Fuente HDR: tonemapping lineal Mobius a Rec.709. Validar piel/blancos/saturación en teléfono; no validado aún con iPhone real.')
+    elif source_video.get('color_transfer', 'unknown') == 'unknown':
+        warnings.append('Fuente SDR sin colorimetría completa: se conserva apariencia decodificada; comprobar color.')
+    if spec.get('cut_policy', {}).get('mode') == 'preserve':
+        warnings.append('cut_policy.mode=preserve: autocortes desactivados incluso con --auto; decisión editorial del Reel.')
+    if (folder/'transcript.json').exists():
+        validate_transcript_identity(read_json(folder/'transcript.json'), digest, duration)
     audio = audio_analysis(source, duration)
     if not audio["audible"]:
         words, transcript_source = [], "Sin audio audible; ASR omitida"
         warnings.append("Sin audio audible: cámara limpia, sin subtítulos ni autocortes.")
     else:
         try:
-            words, transcript_source = get_words(source, folder, output, cfg, duration, digest)
-        except RuntimeError:
+            words, transcript_source = get_words(source, folder, output, cfg, duration, digest, warnings)
+        except (RuntimeError, ValueError) as exc:
+            if (folder/'transcript.json').exists():
+                raise
             words, transcript_source = [], "ASR local falló"
-            warnings.append("ASR local falló: ejecutar install.bat o corregir transcript.json; se conserva cámara sin subtítulos.")
+            warnings.append(f"ASR local falló: ejecutar install.bat o corregir transcript.json; se conserva cámara sin subtítulos. {str(exc)[-300:]}")
         if audio["peak_db"] is not None and audio["peak_db"] >= -.1:
             warnings.append("Pico fuente cercano a 0 dBFS: posible clipping, escuchar. Normalizar no repara distorsión.")
         if audio["mean_db"] is not None and audio["mean_db"] < -35:
@@ -560,23 +618,56 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir):
     fps = cfg["video"]["fps"]
     suggested = validate_ranges(build_keep_segments(words, duration, cfg), duration, fps)
     automatic = auto or spec.get("mode") == "auto"
-    resolved = resolve_beats(spec, words, duration, warnings)
-    protected = [(ev["start"], ev["end"]) for ev in resolved]
+    try:
+        resolved = resolve_beats(spec, words, duration, warnings)
+    except (ValueError, KeyError, TypeError) as exc:
+        resolved = []
+        warnings.append(f'Plan editorial inválido: {exc}; fallback=camera.')
+    protected = []
+    for ev in resolved:
+        try:
+            a,b = float(ev['start']),float(ev['end'])
+            if math.isfinite(a) and math.isfinite(b) and 0 <= a < b <= duration:
+                protected.append((a,b))
+        except (KeyError, TypeError, ValueError):
+            pass  # prepare_events informa y omite la intervención inválida.
     default_keep = auto_keep_segments(words, duration, cfg, audio, protected) if automatic else [(0, duration)]
-    keep = validate_ranges(spec.get("keep_segments", default_keep), duration, fps)
+    asr_unreliable = transcript_source == 'ASR local falló' or (not words and transcript_source in ('cache local','faster-whisper local'))
+    if asr_unreliable:
+        resolved = []
+        warnings.append('ASR sin palabras fiables: cámara íntegra; cortes explícitos e intervenciones suspendidos hasta revisar transcript.')
+    keep = validate_ranges([(0,duration)] if asr_unreliable else spec.get("keep_segments", default_keep), duration, fps)
     validate_cut_boundaries(words, keep)
     strict = spec.get('schema_version', 1) == 2
-    events = prepare_events(resolved, keep, folder, duration,
-                            spec.get('allowed_assets', [] if strict else None), spec.get('asset_roots', []), strict)
+    events = []
+    for candidate in resolved:
+        try:
+            prepared = prepare_events([candidate], keep, folder, duration,
+                                      spec.get('allowed_assets', [] if strict else None), spec.get('asset_roots', []), strict)
+            if any(prepared[0]['start'] < x['end'] and prepared[0]['end'] > x['start'] for x in events):
+                raise ValueError('Conflicto con intervención prioritaria.')
+            events.extend(prepared)
+        except (ValueError, KeyError, TypeError) as exc:
+            warnings.append(f"Intervención {candidate.get('id', candidate.get('type'))}: {exc}; fallback=camera.")
     captions = make_captions(words, keep, cfg) if cfg["subtitles"]["enabled"] else []
     mapping, offset = [], 0.0
     for a, b in keep:
         mapping.append({"source_start": a, "source_end": b, "output_start": offset, "output_end": offset+b-a})
         offset += b-a
+    joins = [dict(output_time=left['output_end'], source_before=left['source_end'],
+                  source_after=right['source_start'], review_from=max(0,left['output_end']-1),
+                  review_to=min(offset,left['output_end']+1)) for left,right in zip(mapping,mapping[1:])]
+    # ASR puede omitir voz: huecos sin palabras ni silencio medido quedan señalados.
+    edges = [0.] + [w.end for w in words]
+    starts = [w.start for w in words] + [duration]
+    for a,b in zip(edges, starts):
+        silent = sum(max(0,min(b,y)-max(a,x)) for x,y in audio['silences'])
+        if audio['audible'] and b-a-silent > 2:
+            warnings.append(f'Posible voz sin transcribir {a:.2f}–{b:.2f}s: escuchar; no se considera silencio ni se autocorta.')
     if not words:
         warnings.append("Sin palabras: no hay subtítulos; no implica que el audio no tenga voz.")
     if not strict and events:
-        warnings.append('Plan legado: migrar a schema_version:2 con allowed_assets; sólo se usan archivos explícitos.')
+        warnings.append('Plan temporal legado compatible; assets también requieren allowed_assets explícita.')
     if any(ev.get('layout') == 'card' for ev in events):
         warnings.append('Card ocupa zona superior: revisar manualmente cara/manos; sin detección automática.')
     for a,b,t in captions:
@@ -605,12 +696,14 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir):
                                         possible_horizontal_clipping=estimated_width>.85,overlays_colliding=overlaps))
     plan = dict(version=2, mode="auto" if automatic else "editorial", source=str(source), sha256=digest, transcript_source=transcript_source,
                 source_duration=duration, output_duration=offset, keep_segments=keep,
+                source_probe=source_probe, color_conversion=colors or 'SDR sin tonemap', cut_joins=joins,
                 suggested_keep_segments=suggested, time_map=mapping, events=events,
                 captions=[dict(start=a,end=b,text=t) for a,b,t in captions], warnings=warnings,
                 script_summary=spec.get('script_summary', ''), caption_diagnostics=caption_diagnostics,
                 config=cfg, audio_analysis=audio, preview=preview, status="plan")
     write_json(run_dir / "plan_edicion.json", plan)
-    write_json(run_dir / "transcript.json", {"words": [asdict(w) for w in words]})
+    write_json(run_dir / "transcript.json", transcript_document(words, digest, duration))
+    write_json(run_dir / 'uniones_corte.json', joins)
     write_json(run_dir / "warnings.json", warnings)
     log = run_dir / "render_log.txt"
     log.write_text(f"DentFlow V2 | modo {plan['mode']} | {'preview' if preview else 'final'}\n"
@@ -618,6 +711,8 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir):
                    f"Transcripción: {transcript_source}\n" + "\n".join(warnings) + "\n", encoding="utf-8")
     write_ass(captions, run_dir / "subtitulos.ass", cfg, events)
     print(f"Plan: {run_dir}", flush=True)
+    for warning in warnings:
+        print('AVISO: ' + warning, flush=True)
     if plan_only:
         return run_dir
     with tempfile.TemporaryDirectory(prefix="dentflow_render_") as td:
@@ -635,22 +730,110 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir):
         if (video["width"], video["height"], video["codec_name"], sound["codec_name"], sound["sample_rate"]) != (
                 cfg["video"]["width"], cfg["video"]["height"], "h264", "aac", "48000"):
             raise RuntimeError("Exportación no cumple resolución/codecs esperados.")
+        from fractions import Fraction
+        if Fraction(video['avg_frame_rate']) != fps or video.get('pix_fmt') != 'yuv420p':
+            raise RuntimeError('Exportación no cumple FPS/pixel format.')
         run(["ffmpeg", "-v", "error", "-xerror", "-i", partial, "-f", "null", "-"])
         final = run_dir / ("PREVIEW.mp4" if preview else "FINAL.mp4")
         partial.rename(final)
     final_audio = audio_analysis(final, measured)
+    black_scan = subprocess.run(['ffmpeg','-hide_banner','-i',str(final),'-an','-vf',
+        'blackdetect=d=0.05:pix_th=0.10:pic_th=0.98','-f','null','-'],
+        capture_output=True,text=True,encoding='utf-8',errors='replace')
+    if black_scan.returncode:
+        raise RuntimeError('No se pudo comprobar cuadros negros de salida.')
+    black_intervals = re.findall(r'black_start:([\d.]+) black_end:([\d.]+) black_duration:([\d.]+)',black_scan.stderr)
+    if black_intervals:
+        warnings.append(f'Cuadros casi negros detectados: {black_intervals}; revisar fuente y montaje.')
+    if fingerprint(source) != digest:
+        raise RuntimeError('La fuente cambió durante el proceso; no se actualizan alias.')
     plan.update(status="rendered", rendered_duration=measured, rendered_audio=final_audio,
+                black_intervals=black_intervals,
                 video_bitrate=video.get('bit_rate'), fps=video.get('avg_frame_rate'),
                 elapsed_seconds=round(time.monotonic()-started, 2), file=str(final))
     write_json(run_dir / "plan_edicion.json", plan)
+    write_json(run_dir / 'warnings.json', warnings)
+    metadata = dict(schema_version=2, type='preview' if preview else 'final',
+                    resolution=[video['width'], video['height']], source_sha256=digest,
+                    output_sha256=fingerprint(final), timestamp=datetime.now().astimezone().isoformat(),
+                    duration=measured, fps=video['avg_frame_rate'], validation='probe+full_decode_passed',
+                    human_review='pending', history_file=str(final))
+    write_json(run_dir/'metadata.json', metadata)
     # Reemplazo atómico dentro del mismo volumen, solamente tras validar el render.
-    latest_temp = output / (run_dir.name + ".partial.mp4")
-    shutil.copyfile(final, latest_temp)
-    latest_temp.replace(output / "VIDEO_BORRADOR.mp4")
+    # Renders pequeños de pruebas conservan historial, nunca un alias de final publicable.
+    if preview or metadata['resolution'] == [1080,1920]:
+        alias = 'VIDEO_PREVIEW' if preview else 'VIDEO_BORRADOR'
+        latest_temp = output / (run_dir.name + ".partial.mp4")
+        metadata_temp = output / (run_dir.name + '.partial.json')
+        shutil.copyfile(final, latest_temp)
+        write_json(metadata_temp, metadata)
+        latest_temp.replace(output / (alias + '.mp4'))
+        metadata_temp.replace(output / (alias + '.json'))
     with log.open("a", encoding="utf-8") as f:
         f.write(f"OK: {final.name}; {measured:.3f}s; {plan['elapsed_seconds']}s de proceso.\n")
     print(f"LISTO: {final}", flush=True)
     return final
+
+
+def diagnose(cfg):
+    """Ejecuta capacidades reales; una capacidad ausente devuelve fallo."""
+    from importlib.metadata import version
+    report = dict(python=sys.version, python_executable=sys.executable, uv=shutil.which('uv'),
+                  ffmpeg=shutil.which('ffmpeg'), ffprobe=shutil.which('ffprobe'), api_paid=False)
+    errors = []
+    try:
+        report['faster-whisper'] = version('faster-whisper')
+        if sys.version_info < (3,10):
+            raise RuntimeError('Python 3.10+ requerido.')
+        if not report['ffmpeg'] or not report['ffprobe']:
+            raise RuntimeError('Faltan ffmpeg/ffprobe en PATH de proceso/usuario/máquina.')
+        filters = run(['ffmpeg','-hide_banner','-filters'])
+        for name in ('ass', 'zscale', 'tonemap'):
+            report[name] = bool(re.search(r'\s'+name+r'\s', filters))
+            if not report[name]:
+                raise RuntimeError('Falta filtro requerido: '+name)
+        with tempfile.TemporaryDirectory(prefix="Diagnóstico ñ O'Brien ") as td:
+            temp = Path(td)
+            write_ass([(0,.4,'Ñandú: 16:00, no.')],temp/'subtitulos.ass',cfg)
+            sample = temp/'smoke.mp4'
+            run(ffmpeg_base(cfg)+['-f','lavfi','-i','color=c=gray:s=180x320:r=30:d=0.5',
+                '-f','lavfi','-i','anullsrc=r=48000:cl=stereo','-t','0.5','-vf','ass=subtitulos.ass',
+                '-c:v','libx264','-threads','1','-pix_fmt','yuv420p','-c:a','aac',sample],cwd=temp)
+            run(['ffmpeg','-v','error','-xerror','-i',sample,'-f','null','-'])
+            report['encode_h264_aac_ass_decode'] = len(probe(sample)['streams']) == 2
+            if not report['encode_h264_aac_ass_decode']:
+                raise RuntimeError('Smoke sin streams H.264/AAC esperados.')
+            options = temp/'cfg.json'
+            write_json(options,dict(cfg['transcription'],offline=True))
+            run([sys.executable,Path(__file__),'--asr-worker',sample,temp/'words.json',options])
+            report['model_offline_loaded'] = cfg['transcription']['model']
+    except Exception as exc:
+        errors.append(str(exc))
+    report.update(status='failed' if errors else 'passed', errors=errors)
+    print(json.dumps(report,ensure_ascii=False,indent=2))
+    return not errors
+
+
+def migrate_transcript(folder, expected_digest):
+    spec = read_json(folder/'edicion.json') if (folder/'edicion.json').exists() else {}
+    source = folder/spec['source'] if 'source' in spec else choose_source_video(folder)
+    digest, duration = fingerprint(source), ffprobe_duration(source)
+    if expected_digest.lower() != digest:
+        raise ValueError('SHA proporcionado no coincide. Obtén Get-FileHash raw.mp4 y revisa antes de migrar.')
+    path = folder/'transcript.json'
+    data = read_json(path)
+    if data.get('source_sha256'):
+        validate_transcript_identity(data,digest,duration)
+        raise ValueError('Transcript ya identificado: no se permite reasignarlo a otro video.')
+    words = validate_words(data['words'],duration)
+    backup = folder/'transcript.legacy.json'
+    # Crear respaldo exclusivamente; nunca sobrescribir un respaldo previo.
+    with backup.open('xb') as dest:
+        dest.write(path.read_bytes())
+    temp = folder/'transcript.migration.partial.json'
+    write_json(temp, transcript_document(words,digest,duration))
+    temp.replace(path)
+    print(f'Transcript migrado explícitamente; respaldo: {backup}')
 
 
 def main():
@@ -667,6 +850,7 @@ def main():
     ap.add_argument("--no-auto-cuts", action="store_true", help="Conserva pausas; keep_segments explícitos tienen prioridad.")
     ap.add_argument("--diagnose", action="store_true")
     ap.add_argument("--warmup", action="store_true", help="Descarga inicial explicita del modelo; luego usar offline.")
+    ap.add_argument('--migrate-transcript', metavar='SHA256', help='Vincula transcript legado revisado; conserva respaldo, exige SHA actual explícito.')
     args = ap.parse_args()
     if args.warmup:
         import numpy as np
@@ -678,11 +862,8 @@ def main():
         print("Modelo preparado. Render local offline disponible.")
         return
     if args.diagnose:
-        from importlib.metadata import version
-        print(json.dumps({"python": sys.version, "ffmpeg": shutil.which("ffmpeg"),
-                          "ffprobe": shutil.which("ffprobe"), "faster-whisper": version("faster-whisper"),
-                          "libass": " ass " in run(["ffmpeg", "-hide_banner", "-filters"]),
-                          "api_paid": False}, indent=2))
+        if not diagnose(yaml.safe_load(args.config.read_text(encoding='utf-8-sig'))):
+            raise SystemExit(1)
         return
     if not args.target:
         ap.error("Indica carpeta Reel o semana.")
@@ -697,6 +878,11 @@ def main():
         args.target = content / args.target
     if args.no_auto_cuts:
         cfg["cuts"]["auto_enabled"] = False
+    if args.migrate_transcript:
+        if args.week:
+            ap.error('Migración sólo por Reel revisado, no en lote.')
+        migrate_transcript(args.target.resolve(), args.migrate_transcript)
+        return
     if args.preview:
         cfg["video"].update(width=360, height=640, preset="veryfast", crf=24)
     targets = [args.target]
@@ -705,14 +891,23 @@ def main():
                          key=lambda p: [int(x) if x.isdigit() else x for x in re.split(r"(\d+)", p.name)])
         if not targets:
             ap.error("No hay carpetas Reel.")
-    failures = 0
+    failures, results = 0, []
     for target in targets:
         try:
-            process_reel(target, cfg, args.plan_only, args.preview, args.auto)
+            result = process_reel(target, cfg, args.plan_only, args.preview, args.auto)
+            metadata = result.parent/'metadata.json'
+            results.append(dict(reel=str(target.resolve()),status='plan' if args.plan_only else 'rendered',
+                                file=str(result),metadata=read_json(metadata) if metadata.exists() else None))
         except Exception as exc:
             failures += 1
+            results.append(dict(reel=str(target.resolve()),status='failed',error=str(exc),previous_outputs_preserved=True))
             print(f"ERROR {target}: {exc}", file=sys.stderr, flush=True)
     if args.week:
+        report_dir = args.target/'OUTPUT'
+        report_dir.mkdir(exist_ok=True)
+        report = report_dir/('lote_'+datetime.now().strftime('%Y%m%d_%H%M%S_%f')+'.json')
+        write_json(report, dict(results=results,passed=len(targets)-failures,failed=failures))
+        print(f'Reporte: {report}',flush=True)
         print(f"LOTE: {len(targets)-failures} correctos; {failures} fallidos.", flush=True)
     if failures:
         raise SystemExit(1)
