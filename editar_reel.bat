@@ -1,5 +1,6 @@
 @echo off
 setlocal
+set "PYTHONUTF8=1"
 set "DF_PY=%LOCALAPPDATA%\DentFlow\venv\Scripts\python.exe"
 if not exist "%DF_PY%" (
   echo Ejecuta install.bat primero.

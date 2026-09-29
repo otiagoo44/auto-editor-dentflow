@@ -1,4 +1,5 @@
 # Reglas iniciales ajustables; no son fórmulas de retención.
+content_root: null  # Opcional: base de rutas relativas de Reel/semana; absolutos no cambian.
 video:
   width: 1080
   height: 1920

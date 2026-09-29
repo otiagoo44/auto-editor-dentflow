@@ -587,6 +587,13 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir):
         lines = t.splitlines()
         bottom = 1-cfg['subtitles']['margin_v']/1920
         top = bottom-len(lines)*cfg['subtitles']['font_size']*1.3/1920
+        # Estimación conservadora, no métricas exactas de libass/font fallback.
+        def text_width(line):
+            units = sum(1 if c in 'MWmw@' else .32 if c.isspace() else .72 if c.isupper() else .55 for c in line)
+            return units*cfg['subtitles']['font_size']/1080
+        estimated_width = max(map(text_width, lines), default=0)
+        if estimated_width > .85:
+            warnings.append(f'Posible desborde horizontal de subtítulo en {a:.2f}s; reducir tamaño o caracteres/línea.')
         if len(lines) > 2:
             raise ValueError('Palabra/texto excesivo: corregir transcript.json para máximo dos líneas.')
         overlaps = [ev.get('id', ev['type']) for ev in events if ev['type'] == 'asset'
@@ -594,7 +601,8 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir):
         if overlaps:
             raise ValueError('Colisión geométrica entre subtítulos y gráfico; ajustar subtitle_policy.')
         caption_diagnostics.append(dict(start=a,end=b,chars_per_second=round(len(t)/(b-a),2),
-                                        estimated_box=[.074,top,.852,bottom-top],overlays_colliding=overlaps))
+                                        estimated_box=[(1-estimated_width)/2,top,estimated_width,bottom-top],
+                                        possible_horizontal_clipping=estimated_width>.85,overlays_colliding=overlaps))
     plan = dict(version=2, mode="auto" if automatic else "editorial", source=str(source), sha256=digest, transcript_source=transcript_source,
                 source_duration=duration, output_duration=offset, keep_segments=keep,
                 suggested_keep_segments=suggested, time_map=mapping, events=events,
@@ -682,6 +690,11 @@ def main():
         if not shutil.which(binary):
             ap.error(f"Falta {binary} en PATH.")
     cfg = yaml.safe_load(args.config.read_text(encoding="utf-8-sig"))
+    if cfg.get('content_root') and not args.target.is_absolute():
+        content = Path(cfg['content_root']).expanduser()
+        if not content.is_absolute():
+            content = args.config.resolve().parent / content
+        args.target = content / args.target
     if args.no_auto_cuts:
         cfg["cuts"]["auto_enabled"] = False
     if args.preview:
@@ -699,6 +712,8 @@ def main():
         except Exception as exc:
             failures += 1
             print(f"ERROR {target}: {exc}", file=sys.stderr, flush=True)
+    if args.week:
+        print(f"LOTE: {len(targets)-failures} correctos; {failures} fallidos.", flush=True)
     if failures:
         raise SystemExit(1)
 

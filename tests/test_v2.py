@@ -60,6 +60,8 @@ class AutoTests(unittest.TestCase):
                 with self.assertRaises(RuntimeError):
                     e.process_reel(folder, config(), auto=True)
             self.assertEqual(digest, e.fingerprint(folder/'OUTPUT/VIDEO_BORRADOR.mp4'))
+            repeat = e.process_reel(folder, config(), auto=True, preview=True)
+            self.assertEqual(e.fingerprint(final), e.fingerprint(repeat))
 
     def test_asr_failure_is_camera_only(self):
         with tempfile.TemporaryDirectory() as td:
@@ -178,6 +180,164 @@ class EditorialTests(unittest.TestCase):
             final = e.process_reel(folder,config(),preview=True)
             self.assertAlmostEqual(e.ffprobe_duration(final),8,delta=.1)
             self.assertIn('EJEMPLO FICTICIO',(final.parent/'subtitulos.ass').read_text(encoding='utf-8'))
+
+
+def center_pixel(path, t):
+    raw = subprocess.check_output(['ffmpeg','-v','error','-ss',str(t),'-i',str(path),
+        '-vf','crop=2:2:(iw-2)/2:(ih-2)/2,scale=1:1','-frames:v','1','-f','rawvideo','-pix_fmt','rgb24','-threads','1','-'])
+    return tuple(raw[:3])
+
+
+class AcceptanceTests(unittest.TestCase):
+    def test_animated_punch_really_moves_and_returns(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder=Path(td)
+            e.run(['ffmpeg','-v','error','-y','-f','lavfi','-i','testsrc2=s=180x320',
+                   '-frames:v','1','-threads','1',folder/'still.png'])
+            e.run(['ffmpeg','-v','error','-y','-loop','1','-framerate','30','-i',folder/'still.png',
+                   '-t','4','-c:v','libx264','-threads','1','-pix_fmt','yuv420p',folder/'raw.mp4'])
+            e.write_json(folder/'edicion.json',dict(schema_version=2,events=[dict(type='reframe',
+                start=.5,end=3.5,approved=True,animated=True,scale=1.1,reason='Prueba movimiento real')]))
+            final=e.process_reel(folder,config())
+            def pixels(t):
+                return subprocess.check_output(['ffmpeg','-v','error','-ss',str(t),'-i',str(final),
+                    '-vf','scale=60:100','-frames:v','1','-f','rawvideo','-pix_fmt','rgb24','-threads','1','-'])
+            frames=[pixels(t) for t in (.2,1,2,3.8)]
+            def diff(a,b):
+                return sum(abs(x-y) for x,y in zip(a,b))/len(a)
+            self.assertGreater(diff(frames[0],frames[2]),3)
+            self.assertGreater(diff(frames[1],frames[2]),1)
+            self.assertLess(diff(frames[0],frames[3]),2)
+
+    def test_content_root_and_subtitle_clipping_diagnostic(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td)
+            folder=root/'Reel 1'
+            fixture(folder,2,audio=True)
+            e.write_json(folder/'transcript.json',dict(words=[dict(start=.2,end=1.8,text='W'*26)]))
+            cfg=config()
+            cfg['content_root']=str(root)
+            path=root/'config.yaml'
+            path.write_text(yaml.safe_dump(cfg),encoding='utf-8')
+            result=subprocess.run([sys.executable,str(ROOT/'src/editor.py'),'Reel 1','--config',str(path),'--plan-only'],capture_output=True)
+            self.assertEqual(result.returncode,0,result.stderr)
+            plan=e.read_json(next((folder/'OUTPUT').glob('*/plan_edicion.json')))
+            self.assertTrue(plan['caption_diagnostics'][0]['possible_horizontal_clipping'])
+            self.assertTrue(any('desborde' in w for w in plan['warnings']))
+
+    @unittest.skipUnless(os.environ.get('DENTFLOW_ASR_SAMPLE'), 'ASR real opt-in: DENTFLOW_ASR_SAMPLE=clip local')
+    def test_offline_asr_with_socket_connections_denied(self):
+        with tempfile.TemporaryDirectory() as td:
+            output=Path(td)/'words.json'
+            command = ("import socket,sys; from pathlib import Path; from unittest.mock import patch; "
+                       "sys.path.insert(0,sys.argv[1]); import editor; "
+                       "guard=patch.object(socket.socket,'connect',side_effect=AssertionError('RED PROHIBIDA')); "
+                       "guard.start(); editor.transcribe_worker(Path(sys.argv[2]),Path(sys.argv[3]),"
+                       "{'model':'base','offline':True,'language':'es','threads':2}); guard.stop()")
+            result=subprocess.run([sys.executable,'-c',command,str(ROOT/'src'),os.environ['DENTFLOW_ASR_SAMPLE'],str(output)],capture_output=True)
+            self.assertEqual(result.returncode,0,result.stderr.decode('utf-8','replace'))
+            self.assertGreater(len(e.read_json(output)['words']),10)
+
+    def test_overlay_window_16_9_and_alpha_after_second_cut(self):
+        with tempfile.TemporaryDirectory(prefix="Overlay ñ O'Brien ") as td:
+            folder=Path(td)
+            cfg=config()
+            cfg['subtitles']['enabled']=False
+            e.run(['ffmpeg','-v','error','-y','-f','lavfi','-i','color=c=red:s=180x320:r=30:d=6',
+                   '-c:v','libx264','-threads','1',folder/'raw.mp4'])
+            e.run(['ffmpeg','-v','error','-y','-f','lavfi','-i','color=c=lime:s=320x180',
+                   '-frames:v','1','-threads','1',folder/'wide.png'])
+            e.run(['ffmpeg','-v','error','-y','-f','lavfi','-i','color=c=blue:s=320x180:r=30:d=2',
+                   '-c:v','libx264','-threads','1',folder/'wide.mp4'])
+            e.write_json(folder/'edicion.json',dict(schema_version=2,allowed_assets=['wide.png','wide.mp4'],
+                keep_segments=[[0,1.5],[2,3.5],[4,6]],events=[
+                    dict(type='asset',file='wide.png',start=.2,end=1.2,approved=True,layout='full',reason='PNG'),
+                    dict(type='asset',file='wide.mp4',start=4.2,end=5.5,approved=True,layout='full',reason='MP4')]))
+            final=e.process_reel(folder,cfg)
+            self.assertAlmostEqual(e.ffprobe_duration(final),5,delta=.07)
+            before,fade,mid,after,clip,done=[center_pixel(final,t) for t in (.1,.2667,.7,1.4,3.8,4.8)]
+            self.assertGreater(before[0],200)
+            self.assertTrue(30 < fade[0] < 220 and 30 < fade[1] < 220,fade)
+            self.assertGreater(mid[1],200)
+            self.assertGreater(after[0],200)
+            self.assertGreater(clip[2],200)
+            self.assertGreater(done[0],200)
+
+    def test_digital_silence_with_asr_on(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder=Path(td)
+            e.run(['ffmpeg','-v','error','-y','-f','lavfi','-i','color=c=gray:s=180x320:r=30:d=2',
+                   '-f','lavfi','-i','anullsrc=r=48000:cl=stereo','-t','2','-c:v','libx264',
+                   '-threads','1','-c:a','aac',folder/'raw.mp4'])
+            with patch.object(e,'get_words',side_effect=AssertionError('No transcribir silencio')):
+                final=e.process_reel(folder,config(),auto=True)
+            plan=e.read_json(final.parent/'plan_edicion.json')
+            self.assertFalse(plan['audio_analysis']['audible'])
+            self.assertFalse(plan['rendered_audio']['audible'])
+
+    def test_vfr_rotated_input_and_audio_joins(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder=Path(td)
+            # Cadencia variable real: 30 fps primeros 2 s, luego uno de cada dos cuadros.
+            e.run(['ffmpeg','-v','error','-y','-f','lavfi','-i','testsrc2=s=320x180:r=30:d=10',
+                   '-f','lavfi','-i',r"aevalsrc=if(between(t\,1\,3.2)\,0\,0.1*sin(2*PI*330*t)):s=48000:d=10",
+                   '-vf',r"select=if(lt(t\,2)\,1\,not(mod(n\,2)))",'-fps_mode','vfr',
+                   '-c:v','libx264','-threads','1','-c:a','aac',folder/'source.mp4'])
+            e.run(['ffmpeg','-v','error','-y','-i',folder/'source.mp4','-c','copy',
+                   '-metadata:s:v:0','rotate=90',folder/'raw.mp4'])
+            e.write_json(folder/'transcript.json',dict(words=[dict(start=.2,end=.9,text='No.'),
+                                                            dict(start=3.3,end=3.7,text='12.'),dict(start=4,end=4.5,text='Consultas.')]))
+            final=e.process_reel(folder,config(),auto=True)
+            plan=e.read_json(final.parent/'plan_edicion.json')
+            self.assertEqual(len(plan['keep_segments']),2)
+            self.assertEqual(plan['fps'],'30/1')
+            self.assertLess(plan['output_duration'],10)
+            self.assertLess(plan['rendered_audio']['peak_db'],0)
+            video=next(s for s in e.probe(final)['streams'] if s['codec_type']=='video')
+            self.assertEqual((video['width'],video['height']),(180,320))
+            # La unión cae dentro del silencio conservado; no hay sílabas/tone solapados.
+            boundary=plan['time_map'][0]['output_end']
+            raw=subprocess.check_output(['ffmpeg','-v','error','-ss',str(boundary-.05),'-i',str(final),
+                '-t','0.1','-f','f32le','-ac','1','-ar','48000','-'])
+            import array
+            samples=array.array('f',raw)
+            self.assertLess(max(map(abs,samples)),.001)
+
+    @unittest.skipUnless(sys.platform=='win32','BAT Windows')
+    def test_week_and_windows_paths_with_partial_failure(self):
+        with tempfile.TemporaryDirectory(prefix="Semana ñ O'Brien ") as td:
+            week=Path(td)
+            assets=week/'Assets'
+            assets.mkdir()
+            for i,color in [(1,'blue'),(2,'lime')]:
+                folder=week/f'Reel {i}'
+                fixture(folder,2)
+                name=f'demo {i}.png'
+                e.run(['ffmpeg','-v','error','-y','-f','lavfi','-i',f'color=c={color}:s=180x320',
+                       '-frames:v','1','-threads','1',assets/name])
+                e.write_json(folder/'edicion.json',dict(schema_version=2,allowed_assets=[f'../Assets/{name}'],events=[
+                    dict(type='asset',file=f'../Assets/{name}',start=.2,end=1.7,approved=True,layout='full',reason='Test propio')]))
+            cmd=[str(ROOT/'editar_semana.bat'),str(week),'--auto','--preview']
+            good=subprocess.run(cmd,capture_output=True)
+            self.assertEqual(good.returncode,0,good.stderr)
+            one=week/'Reel 1/OUTPUT/VIDEO_BORRADOR.mp4'
+            two=week/'Reel 2/OUTPUT/VIDEO_BORRADOR.mp4'
+            self.assertGreater(center_pixel(one,1)[2],200)
+            self.assertGreater(center_pixel(two,1)[1],200)
+            # Ampliación a cinco: tres correctos adicionales; uno se hace fallar después.
+            for i in (3,4,5):
+                fixture(week/f'Reel {i}',1)
+            five=subprocess.run(cmd,capture_output=True)
+            self.assertEqual(five.returncode,0,five.stderr)
+            e.write_json(week/'Reel 2/edicion.json',dict(source='falta.mp4'))
+            previous=e.fingerprint(two)
+            failed=subprocess.run(cmd,capture_output=True)
+            self.assertEqual(failed.returncode,1)
+            self.assertIn(b'4 correctos; 1 fallidos',failed.stdout)
+            self.assertEqual(previous,e.fingerprint(two))
+            self.assertTrue((week/'Reel 5/OUTPUT/VIDEO_BORRADOR.mp4').exists())
+            plan_only=subprocess.run([str(ROOT/'editar_reel.bat'),str(week/'Reel 1'),'--plan-only'],capture_output=True)
+            self.assertEqual(plan_only.returncode,0,plan_only.stderr)
 
 
 if __name__ == '__main__':

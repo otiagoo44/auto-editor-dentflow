@@ -26,6 +26,24 @@ SCRIPT = ('¿Cuántas consultas siguen abiertas y quién las debe contactar? '
           'Revisá una consulta de tu clínica: ¿están claros esos datos?')
 
 
+def correct_fixture_transcript(data):
+    """Correcciones revisadas contra SCRIPT, sólo para esta locución sintética.
+
+    No es un corrector general ni se incorpora al motor. ASR original queda en cache.
+    """
+    corrections = {'Mira':'Mirá', 'que':'qué', '¿Estado?':'Estado:', '¿En':'En',
+                   'ésta?':'está.', '¿Responsable?':'Responsable:', '¿Quién':'Quién',
+                   'esto?':'esto.', 'Fecha,':'Fecha:', 'cuando':'cuándo', 'Proxima':'Próxima',
+                   'acción,':'acción:', 'recepción.':'Recepción.', '16.':'dieciséis.',
+                   'Revisar':'Revisá', 'clínica,':'clínica:', 'están':'¿están'}
+    for i,word in enumerate(data['words']):
+        word['text'] = corrections.get(word['text'],word['text'])
+        if word['text']=='datos.' and i and data['words'][i-1]['text']=='esos':
+            word['text']='datos?'
+    data['correction_note']='Correcciones explícitas revisadas contra guion de voz sintética; no generalizar a grabaciones reales.'
+    return data
+
+
 def make_reel(folder, text):
     folder.mkdir(parents=True)
     speech = folder/'speech.wav'
@@ -65,7 +83,8 @@ def main():
     cfg = make_reel(one,SCRIPT)
     shutil.copyfile(ROOT/'contenido-dentflow/semana-1/Reel 1/edicion.json',one/'edicion.json')
     # Primero ASR verdadera; guarda output auditable para revisar triggers.
-    e.process_reel(one,cfg,plan_only=True,auto=True)
+    plan_dir=e.process_reel(one,cfg,plan_only=True,auto=True)
+    e.write_json(one/'transcript.json',correct_fixture_transcript(e.read_json(plan_dir/'transcript.json')))
     make_reel(two, 'Conversar y controlar son tareas distintas. Conversar permite responder y coordinar. '
               'Para ordenar el seguimiento, mirá el estado, la persona responsable, la fecha y la próxima acción. '
               'Esto es un esquema explicativo. Revisá una consulta abierta y comprobá quién la sigue.')
