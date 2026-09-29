@@ -1,5 +1,25 @@
 # DentFlow AutoEditor V2 local
 
+## Checkpoint V2.1 — integración en curso (29/09/2026)
+
+Rama `v2.1-remotion`. Se recuperaron los cambios locales de la sesión anterior
+en `4f33bac`, conservando los commits `b8ab8a5` y `3a9c802`.
+Este checkpoint se sube por pedido del usuario; **V2.1 todavía no está validada**.
+
+- Añadidos motor Remotion opcional (`--engine remotion`), puente de tiempos/recursos,
+  composiciones educativa/comercial, seis plantillas, instalador y menú `autoeditor.bat`.
+- Ejemplo comercial: `ejemplos/Comercial/edicion.json`. No requiere cámara; música apagada.
+- Base antes de integrar: 31 pruebas descubiertas, 30 aprobadas, 1 ASR opt-in omitida.
+  Prueba adicional de política de cortes aprobada; diagnóstico offline aprobado.
+- TypeScript compila con Remotion 4.0.530 y Zod 4.5.4 fijados.
+- Primera ejecución de `test_motion.py`: 6 pruebas de contrato aprobadas y
+  **2 errores de render** en la comprobación final de FPS/formato de píxel.
+  Investigar metadata del MP4 Remotion y su conversión antes de dar la versión por lista.
+- Pendientes: corregir esos errores, ejecutar regresión completa, revisar demos
+  completas y probar dos grabaciones reales de iPhone, aún no disponibles.
+- El texto posterior documenta V2 y sus verificaciones anteriores; no demuestra
+  aceptación de la nueva integración. No se versionan videos, caches ni node_modules.
+
 Una grabación → montaje local → revisión, sin APIs de pago por render.
 **Faltan tus grabaciones iPhone R1/R2 para validar calidad editorial real.**
 La raíz ejecutable es `C:\auto-editor-dentflow`.

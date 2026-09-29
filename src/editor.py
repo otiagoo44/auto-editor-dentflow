@@ -359,7 +359,7 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
 
 def prepare_events(specs, keep, folder, duration, allowed_assets=None, roots=(), strict=False):
     events = []
-    allowed = {asset_path(name, folder, roots) for name in (allowed_assets or [])}
+    allowed = {(folder / name).resolve() for name in (allowed_assets or [])}
     for spec in specs:
         ev = dict(spec)
         if ev.get('time_basis', 'source') != 'source' or any(k in ev for k in ('output_time', 'output_start', 'output_end')):
@@ -408,8 +408,14 @@ def prepare_events(specs, keep, folder, duration, allowed_assets=None, roots=(),
         elif ev['type'] == 'text':
             if not str(ev.get('text', '')).strip() or len(lines_for(ev['text'], 28)) > 2:
                 raise ValueError('Título/callout requiere texto breve, máximo 2 líneas de 28 caracteres.')
+        elif ev['type'] == 'motion':
+            if ev.get('approved') is not True or ev.get('layout', 'card') not in ('card','full'):
+                raise ValueError('Escena requiere approved:true y layout card|full.')
         else:
             raise ValueError("Evento desconocido: usa asset, reframe o text.")
+        if 'template' in ev or ev['type'] == 'motion':
+            from motion import validate_scene
+            validate_scene(ev)
         events.append(ev)
     events.sort(key=lambda x: x["start"])
     if any(b["start"] < a["end"] for a, b in zip(events, events[1:])):
@@ -553,14 +559,14 @@ def render_final(cut, ass, events, out, cfg, temp, duration):
     run(cmd, cwd=temp)
 
 
-def process_reel(folder, cfg, plan_only=False, preview=False, auto=False):
+def process_reel(folder, cfg, plan_only=False, preview=False, auto=False, engine=None):
     folder = folder.resolve()
     output = folder / 'OUTPUT'
     output.mkdir(exist_ok=True)
     run_dir = output / datetime.now().strftime('%Y%m%d_%H%M%S_%f')
     run_dir.mkdir()
     try:
-        return _process_reel(folder, cfg, plan_only, preview, auto, run_dir)
+        return _process_reel(folder, cfg, plan_only, preview, auto, run_dir, engine)
     except Exception as exc:
         message = f'ERROR recuperable: {exc}\nÚltimos VIDEO_BORRADOR y VIDEO_PREVIEW conservados.\n'
         with (run_dir/'render_log.txt').open('a', encoding='utf-8') as f:
@@ -573,7 +579,7 @@ def process_reel(folder, cfg, plan_only=False, preview=False, auto=False):
         raise
 
 
-def _process_reel(folder, cfg, plan_only, preview, auto, run_dir):
+def _process_reel(folder, cfg, plan_only, preview, auto, run_dir, engine=None):
     started = time.monotonic()
     cfg = copy.deepcopy(cfg)
     # Ningún render descarga modelos: la instalación es la única etapa con red.
@@ -583,7 +589,21 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir):
     folder = folder.resolve()
     spec = read_json(folder / "edicion.json") if (folder / "edicion.json").exists() else {}
     policies(spec, cfg)
-    source = (folder / spec["source"]).resolve() if "source" in spec else choose_source_video(folder)
+    import motion
+    options = motion.render_options(spec, engine)
+    graphic_only = options['template']=='comercial' and not spec.get('source')
+    if options['engine']=='remotion' and not plan_only:
+        motion.runtime()  # Error accionable antes de ASR/cortes y sin descargas implícitas.
+    if graphic_only:
+        if options['engine']!='remotion':
+            raise ValueError('Comercial sin cámara requiere --engine remotion.')
+        length = bounded(options.get('duration_seconds'), .5, 600, 'render.duration_seconds')
+        source = run_dir/'base_grafica.mp4'
+        run(ffmpeg_base(cfg)+['-f','lavfi','-i',f'color=c=0x071629:s=180x320:r={cfg["video"]["fps"]}:d={length}',
+            '-f','lavfi','-i','anullsrc=r=48000:cl=stereo','-t',str(length),'-c:v','libx264','-threads','1',
+            '-pix_fmt','yuv420p','-c:a','aac',source])
+    else:
+        source = (folder / spec["source"]).resolve() if "source" in spec else choose_source_video(folder)
     duration, digest = ffprobe_duration(source), fingerprint(source)
     source_probe = probe(source)
     source_video = next(s for s in source_probe['streams'] if s['codec_type'] == 'video')
@@ -597,7 +617,7 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir):
         warnings.append('Fuente SDR sin colorimetría completa: se conserva apariencia decodificada; comprobar color.')
     if spec.get('cut_policy', {}).get('mode') == 'preserve':
         warnings.append('cut_policy.mode=preserve: autocortes desactivados incluso con --auto; decisión editorial del Reel.')
-    if (folder/'transcript.json').exists():
+    if not graphic_only and (folder/'transcript.json').exists():
         validate_transcript_identity(read_json(folder/'transcript.json'), digest, duration)
     audio = audio_analysis(source, duration)
     if not audio["audible"]:
@@ -649,6 +669,19 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir):
             events.extend(prepared)
         except (ValueError, KeyError, TypeError) as exc:
             warnings.append(f"Intervención {candidate.get('id', candidate.get('type'))}: {exc}; fallback=camera.")
+    events.sort(key=lambda ev: ev['start'])
+    if options['engine']=='ffmpeg':
+        for ev in events:
+            if ev['type']=='motion':
+                ev.update(type='text', text=ev['params']['title'])
+                warnings.append('Plantilla Remotion reducida a título estático por --engine ffmpeg; revisa o usa Remotion.')
+                if len(lines_for(ev['text'],28))>2:
+                    raise ValueError('Título de plantilla demasiado largo para fallback FFmpeg.')
+    if graphic_only:
+        if not events or events[0]['start'] > 1/fps or events[-1]['end'] < duration-1/fps or any(b['start']-a['end']>1/fps for a,b in zip(events,events[1:])):
+            raise ValueError('Comercial sin cámara necesita escenas aprobadas que cubran toda la duración, sin huecos.')
+        if any(ev.get('layout')!='full' or ev['type'] not in ('motion','asset') for ev in events):
+            raise ValueError('Comercial sin cámara necesita escenas full (motion o asset).')
     captions = make_captions(words, keep, cfg) if cfg["subtitles"]["enabled"] else []
     mapping, offset = [], 0.0
     for a, b in keep:
@@ -687,14 +720,17 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir):
             warnings.append(f'Posible desborde horizontal de subtítulo en {a:.2f}s; reducir tamaño o caracteres/línea.')
         if len(lines) > 2:
             raise ValueError('Palabra/texto excesivo: corregir transcript.json para máximo dos líneas.')
-        overlaps = [ev.get('id', ev['type']) for ev in events if ev['type'] == 'asset'
+        overlaps = [ev.get('id', ev['type']) for ev in events if ev['type'] in ('asset','motion')
                     and a < ev['end'] and b > ev['start'] and top < .69]
         if overlaps:
             raise ValueError('Colisión geométrica entre subtítulos y gráfico; ajustar subtitle_policy.')
         caption_diagnostics.append(dict(start=a,end=b,chars_per_second=round(len(t)/(b-a),2),
                                         estimated_box=[(1-estimated_width)/2,top,estimated_width,bottom-top],
                                         possible_horizontal_clipping=estimated_width>.85,overlays_colliding=overlaps))
-    plan = dict(version=2, mode="auto" if automatic else "editorial", source=str(source), sha256=digest, transcript_source=transcript_source,
+    speech_windows = [[remap_time(w.start,keep),remap_time(w.end,keep)] for w in words
+                      if any(a<=w.start and w.end<=b+1e-6 for a,b in keep)]
+    plan = dict(version='2.1', engine=options['engine'], render=options, source_type='generated_graphics' if graphic_only else 'recording',
+                speech_windows=speech_windows, mode="auto" if automatic else "editorial", source=str(source), sha256=digest, transcript_source=transcript_source,
                 source_duration=duration, output_duration=offset, keep_segments=keep,
                 source_probe=source_probe, color_conversion=colors or 'SDR sin tonemap', cut_joins=joins,
                 suggested_keep_segments=suggested, time_map=mapping, events=events,
@@ -706,10 +742,11 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir):
     write_json(run_dir / 'uniones_corte.json', joins)
     write_json(run_dir / "warnings.json", warnings)
     log = run_dir / "render_log.txt"
-    log.write_text(f"DentFlow V2 | modo {plan['mode']} | {'preview' if preview else 'final'}\n"
+    log.write_text(f"DentFlow V2.1 | {options['engine']} | modo {plan['mode']} | {'preview' if preview else 'final'}\n"
                    f"Fuente: {duration:.3f}s; montaje: {offset:.3f}s; tramos: {len(keep)}\n"
                    f"Transcripción: {transcript_source}\n" + "\n".join(warnings) + "\n", encoding="utf-8")
-    write_ass(captions, run_dir / "subtitulos.ass", cfg, events)
+    if options['engine']=='ffmpeg':
+        write_ass(captions, run_dir / "subtitulos.ass", cfg, events)
     print(f"Plan: {run_dir}", flush=True)
     for warning in warnings:
         print('AVISO: ' + warning, flush=True)
@@ -717,10 +754,13 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir):
         return run_dir
     with tempfile.TemporaryDirectory(prefix="dentflow_render_") as td:
         temp = Path(td)
-        shutil.copyfile(run_dir / "subtitulos.ass", temp / "subtitulos.ass")
         cut = render_cut_video(source, keep, temp, cfg)
         partial = run_dir / "render.partial.mp4"
-        render_final(cut, temp / "subtitulos.ass", events, partial, cfg, temp, offset)
+        if options['engine']=='remotion':
+            motion.render(cut, partial, plan, spec, options, folder, run_dir, sys.modules[__name__])
+        else:
+            shutil.copyfile(run_dir / 'subtitulos.ass', temp / 'subtitulos.ass')
+            render_final(cut, temp / "subtitulos.ass", events, partial, cfg, temp, offset)
         rendered = probe(partial)
         measured = float(rendered["format"]["duration"])
         if abs(measured - offset) > max(.15, 2 / fps):
@@ -753,7 +793,7 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir):
                 elapsed_seconds=round(time.monotonic()-started, 2), file=str(final))
     write_json(run_dir / "plan_edicion.json", plan)
     write_json(run_dir / 'warnings.json', warnings)
-    metadata = dict(schema_version=2, type='preview' if preview else 'final',
+    metadata = dict(schema_version=2, version='2.1', engine=options['engine'], type='preview' if preview else 'final',
                     resolution=[video['width'], video['height']], source_sha256=digest,
                     output_sha256=fingerprint(final), timestamp=datetime.now().astimezone().isoformat(),
                     duration=measured, fps=video['avg_frame_rate'], validation='probe+full_decode_passed',
@@ -840,12 +880,13 @@ def main():
     if len(sys.argv) > 1 and sys.argv[1] == "--asr-worker":
         transcribe_worker(Path(sys.argv[2]), Path(sys.argv[3]), read_json(Path(sys.argv[4])))
         return
-    ap = argparse.ArgumentParser(description="DentFlow V2 local: raw.mp4 a OUTPUT/VIDEO_BORRADOR.mp4, sin APIs.")
+    ap = argparse.ArgumentParser(description="DentFlow V2.1 local: raw.mp4 a OUTPUT/VIDEO_BORRADOR.mp4, sin APIs.")
     ap.add_argument("target", nargs="?", type=Path)
     ap.add_argument("--config", type=Path, default=ROOT / "config.yaml")
     ap.add_argument("--week", action="store_true")
     ap.add_argument("--plan-only", action="store_true")
     ap.add_argument("--preview", action="store_true")
+    ap.add_argument('--engine', choices=['ffmpeg','remotion'], default=None, help='Sobrescribe render.engine del plan; FFmpeg por defecto.')
     ap.add_argument("--auto", action="store_true", help="Cortes conservadores corroborados por silencio; sin assets inventados.")
     ap.add_argument("--no-auto-cuts", action="store_true", help="Conserva pausas; keep_segments explícitos tienen prioridad.")
     ap.add_argument("--diagnose", action="store_true")
@@ -862,7 +903,16 @@ def main():
         print("Modelo preparado. Render local offline disponible.")
         return
     if args.diagnose:
-        if not diagnose(yaml.safe_load(args.config.read_text(encoding='utf-8-sig'))):
+        okay = diagnose(yaml.safe_load(args.config.read_text(encoding='utf-8-sig')))
+        if args.engine=='remotion':
+            try:
+                import motion
+                node,cli,browser=motion.runtime()
+                print(json.dumps(dict(remotion='installed', node=node, browser=str(browser))))
+            except RuntimeError as exc:
+                print(str(exc),file=sys.stderr)
+                okay=False
+        if not okay:
             raise SystemExit(1)
         return
     if not args.target:
@@ -894,7 +944,7 @@ def main():
     failures, results = 0, []
     for target in targets:
         try:
-            result = process_reel(target, cfg, args.plan_only, args.preview, args.auto)
+            result = process_reel(target, cfg, args.plan_only, args.preview, args.auto, args.engine)
             metadata = result.parent/'metadata.json'
             results.append(dict(reel=str(target.resolve()),status='plan' if args.plan_only else 'rendered',
                                 file=str(result),metadata=read_json(metadata) if metadata.exists() else None))

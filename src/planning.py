@@ -114,6 +114,11 @@ def resolve_beats(spec, words, duration, warnings):
             raise ValueError('Animación no permitida.')
         ev = dict(id=identity, start=a, end=b, time_basis='source', approved=True,
                   purpose=beat['purpose'], reason=beat['reason'], animation=animation)
+        if 'template' in beat:
+            from motion import TEMPLATES, params
+            if beat['template'] not in TEMPLATES:
+                raise ValueError('template no pertenece al catálogo permitido.')
+            ev.update(template=beat['template'], params=params(beat.get('params', {})))
         if animation == 'CAMERA_PUNCH_IN_OUT':
             ev.update(type='reframe', scale=beat.get('scale', 1.07), x=beat.get('x', .5), y=beat.get('y', .4), animated=True)
         elif animation in ('HOOK_TEXT', 'CALLOUT'):
@@ -138,6 +143,8 @@ def resolve_beats(spec, words, duration, warnings):
                 if abs(cursor-b) > .05:
                     raise ValueError('Las duraciones de steps deben cubrir exactamente el beat.')
                 continue
+        elif beat.get('template'):
+            ev.update(type='motion', layout=beat.get('layout', 'card'), demo=beat.get('demo', False))
         else:
             continue  # Beat puramente hablado, cámara.
         result.append(ev)

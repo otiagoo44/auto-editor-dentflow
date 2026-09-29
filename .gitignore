@@ -22,3 +22,7 @@ transcript*.json
 *.pem
 *.key
 *.partial.*
+node_modules/
+remotion/public/jobs/
+remotion/.cache/
+remotion/build/

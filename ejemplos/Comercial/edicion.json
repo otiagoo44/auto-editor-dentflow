@@ -1,0 +1,17 @@
+{
+  "schema_version": 2,
+  "mode": "editorial",
+  "script_summary": "Demostración gráfica original de 28 segundos. Datos ilustrativos, sin cámara ni música. Revisa el texto antes de publicar.",
+  "render": {"engine": "remotion", "template": "comercial", "duration_seconds": 28, "music": {"enabled": false}},
+  "allowed_assets": ["../../contenido-dentflow/semana-1/Assets/Asset E.png"],
+  "asset_roots": ["../../contenido-dentflow/semana-1/Assets"],
+  "events": [
+    {"id":"pregunta","type":"motion","template":"QuestionHook","start":0,"end":3,"layout":"full","approved":true,"reason":"Situar el problema de seguimiento","params":{"title":"Llegan consultas.\n¿Y después?","subtitle":"Una pregunta para revisar cómo trabaja tu recepción.","eyebrow":"SEGUIMIENTO DE CONSULTAS"}},
+    {"id":"entradas","type":"motion","template":"AnimatedMessages","start":3,"end":7,"layout":"full","demo":true,"approved":true,"reason":"Mostrar entradas ilustrativas separadas","params":{"title":"Tres mensajes.\nUn mismo desafío.","items":[{"label":"WhatsApp","value":"Hola, quisiera información.","at_seconds":0},{"label":"Instagram","value":"¿Tienen un horario disponible?","at_seconds":0.6},{"label":"Web","value":"Quisiera hacer una consulta.","at_seconds":1.2}]}},
+    {"id":"proceso","type":"motion","template":"StepDiagram","start":7,"end":11,"layout":"full","approved":true,"reason":"Ordenar responsabilidades de forma visible","params":{"title":"Responder es\nsolo el comienzo.","theme":"light","items":[{"label":"Entrada","value":"Identificar la consulta","at_seconds":0},{"label":"Responsable","value":"Acordar quién sigue","at_seconds":0.6},{"label":"Seguimiento","value":"Definir el próximo paso","at_seconds":1.2}]}},
+    {"id":"ficha","type":"motion","template":"CRMHighlight","start":11,"end":16,"layout":"full","demo":true,"approved":true,"reason":"Hacer visible estado, responsable y acción, sin simular una captura real","params":{"title":"Una consulta.\nTres decisiones claras.","eyebrow":"FICHA ILUSTRATIVA","items":[{"label":"ESTADO","value":"Seguimiento pendiente","at_seconds":0},{"label":"RESPONSABLE","value":"Recepción","at_seconds":0.6},{"label":"PRÓXIMA ACCIÓN","value":"Llamar hoy a las 16:00","at_seconds":1.2}]}},
+    {"id":"detalle","type":"asset","template":"ScreenshotFocus","start":16,"end":20,"file":"../../contenido-dentflow/semana-1/Assets/Asset E.png","layout":"full","focus_region":[0.745,0.39,0.225,0.37],"demo":true,"animation":"none","approved":true,"reason":"Aislar el campo próxima acción del recurso E autorizado","params":{"title":"Un paso concreto\npara avanzar.","eyebrow":"DETALLE DEL ESQUEMA"}},
+    {"id":"revision","type":"motion","template":"StepDiagram","start":20,"end":24,"layout":"full","approved":true,"reason":"Ofrecer una revisión operativa sin resultados prometidos","params":{"title":"Antes de cerrar el día:","theme":"light","items":[{"label":"Consultas abiertas","value":"¿Qué queda pendiente?","at_seconds":0},{"label":"Responsables","value":"¿Quién lo sigue?","at_seconds":0.5},{"label":"Próximas acciones","value":"¿Qué se hace y cuándo?","at_seconds":1.0}]}},
+    {"id":"cierre","type":"motion","template":"SummaryCTA","start":24,"end":28,"layout":"full","approved":true,"reason":"Una acción utilizable, sin destino ni promesa inventados","params":{"title":"Cada consulta.\nUn siguiente paso.","subtitle":"Empezá por una consulta que siga abierta en tu clínica.","cta":"Revisá quién la sigue hoy","theme":"light"}}
+  ]
+}
