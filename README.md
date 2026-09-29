@@ -1,5 +1,28 @@
 # DentFlow AutoEditor V1
 
+## Estado de preparación — 29-09-2026, checkpoint A
+
+HEAD recibido `e03cafbfd1cc403c124f1bf8ea9e2ef172064098`, posterior a `7082841`:
+el proyecto fue movido de `dentflow/` a esta raíz; no hay segundo editor.
+Repositorio limpio, fetch y pull fast-forward sin cambios. En esta PC se instalaron
+uv 0.12.20, Python 3.12.14, FFmpeg/ffprobe 9.0.2 y faster-whisper 1.1.1.
+Referencia antes de modificar el motor: 7/7 tests pasaron (3.89 s), cuatro renders.
+Primer intento falló por falta de PyYAML; segundo por PATH de FFmpeg sin refrescar.
+Modelo base descargado y smoke de 8 s de voz real R01 transcrito con
+`local_files_only=True`; no es validación de voz iPhone ni español propio.
+`install.bat` ahora instala/precalienta; `--diagnose` sólo diagnostica herramientas.
+
+CONFIRMADO POR EJECUCIÓN / YA RESUELTO: imágenes finitas, retorno después de
+PNG/MP4, límites de corte, escapes ASS, render sin audio con ASR apagada.
+CONFIRMADO POR LECTURA: caché SHA/config, worker separado y transcript manual;
+faltan modo auto, contrato semántico y allowlist en el HEAD recibido.
+RIESGO PENDIENTE DE REPRODUCIR: iPhone/VFR real, español propio, ASR sin audio,
+legibilidad móvil y lote. No existen R1/R2 propios en este checkout.
+
+Watch 0.3.2 operativo con motor local y backend none; no WhisperX ni nube.
+Inspección nueva R01 4/4.5/5/5.5 s: perspectiva cambia hacia tablet; no prueba
+zoom digital. Se conserva la procedencia de la evidencia anterior.
+
 Editor local funcional para grabaciones propias. Genera transcripción, subtítulos por frases, plan auditable y MP4 vertical. Mantiene las pausas por defecto y propone intervalos para revisión. Los cortes, apoyos y reencuadres se indican con tiempos de la grabación original. No decide por sí solo qué argumento convence ni promete retención.
 
 ## Uso en este equipo
@@ -82,5 +105,5 @@ Un evento reframe usa start/end/reason, scale (1–1.3), x/y (0–1). Es un camb
 
 Pruebas de tiempos, palabras breves, límites de corte, agrupación de subtítulos, escapes ASS y renders reales de PNG/MP4 con corte y eventos tardíos. Muestra de aceptación original y sintética en `%LOCALAPPDATA%\DentFlow\validacion_v1`; no sustituye validar una grabación tuya. No había grabaciones propias en las carpetas Reel del proyecto.
 
-La investigación está en [hallazgos](Flow/Herramientas/DentFlow_AutoEditor/research/hallazgos.md), junto a [guía audiovisual](Flow/Herramientas/DentFlow_AutoEditor/research/dentflow_educativo_v1.md), evidencia.csv y propuesta_autoeditor.md. Está incompleta respecto de los cinco creadores. El archivo asset_map.example.json pertenece al prototipo anterior: V1 usa eventos explícitos de edicion.json y no consume ese mapa.
+La investigación está en la [guía audiovisual](Flow/Herramientas/DentFlow_AutoEditor/research/dentflow_educativo_v1.md) y [evidencia](Flow/Herramientas/DentFlow_AutoEditor/research/evidencia.csv). Los antiguos enlaces a hallazgos/propuesta no existían. Se retiró el mapa obsoleto sin consumidores y la dependencia directa requests sin uso.
 

@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import re
 import shutil
 import subprocess
@@ -18,6 +19,15 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 VIDEO_EXTS = {".mp4", ".mov", ".m4v", ".webm", ".mkv"}
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp"}
+
+# Winget actualiza el PATH de usuario, pero una terminal ya abierta no lo hereda.
+if sys.platform == "win32":
+    import winreg
+    with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment") as _key:
+        try:
+            os.environ["PATH"] += os.pathsep + os.path.expandvars(winreg.QueryValueEx(_key, "Path")[0])
+        except FileNotFoundError:
+            pass
 
 
 def run(cmd, cwd=None):
@@ -455,11 +465,22 @@ def main():
     ap.add_argument("--plan-only", action="store_true")
     ap.add_argument("--preview", action="store_true")
     ap.add_argument("--diagnose", action="store_true")
+    ap.add_argument("--warmup", action="store_true", help="Descarga inicial explicita del modelo; luego usar offline.")
     args = ap.parse_args()
+    if args.warmup:
+        import numpy as np
+        from faster_whisper import WhisperModel
+        cfg = yaml.safe_load(args.config.read_text(encoding="utf-8-sig"))["transcription"]
+        model = WhisperModel(cfg["model"], device="cpu", compute_type="int8", cpu_threads=cfg.get("threads", 2))
+        segments, _ = model.transcribe(np.zeros(16000, dtype=np.float32), language=cfg.get("language", "es"), vad_filter=True)
+        list(segments)
+        print("Modelo preparado. Render local offline disponible.")
+        return
     if args.diagnose:
         from importlib.metadata import version
         print(json.dumps({"python": sys.version, "ffmpeg": shutil.which("ffmpeg"),
                           "ffprobe": shutil.which("ffprobe"), "faster-whisper": version("faster-whisper"),
+                          "libass": " ass " in run(["ffmpeg", "-hide_banner", "-filters"]),
                           "api_paid": False}, indent=2))
         return
     if not args.target:

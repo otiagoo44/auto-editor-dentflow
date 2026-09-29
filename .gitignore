@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+OUTPUT/
+*.mp4
+*.MP4
+*.mov
+*.MOV
+*.mkv
+*.wav
+*.mp3
+.venv/
+.cache/
+.env
+*.partial.*
