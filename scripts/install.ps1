@@ -14,6 +14,7 @@ if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
 $uvCommand = Get-Command uv -ErrorAction Stop
 $uvExe = $uvCommand.Source
 if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue) -or -not (Get-Command ffprobe -ErrorAction SilentlyContinue)) {
+    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) { throw 'Falta winget: instala App Installer o FFmpeg con ffprobe y libass, y repite install.bat.' }
     winget install --id Gyan.FFmpeg --exact --silent --accept-package-agreements --accept-source-agreements
     if ($LASTEXITCODE) { throw 'No se pudo instalar FFmpeg.' }
     Refresh-ToolPath

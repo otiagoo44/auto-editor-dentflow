@@ -9,6 +9,17 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'src'))
 import editor as e
 
+
+def correct_second_fixture(data):
+    """Sólo el guion SAPI de Reel 2, cotejado palabra a palabra; nunca en runtime."""
+    corrections={'una':'Una','cargo':'cargo.','no':'No','mensaje':'mensaje.',
+                 'revisar':'Revisá','quien':'quién','sigue':'sigue.'}
+    for word in data['words']:
+        word['text']=corrections.get(word['text'],word['text'])
+    data['correction_note']='Correcciones contra guion SAPI de este fixture; no generalizar a grabaciones propias.'
+    return data
+
+
 def main():
     ap=argparse.ArgumentParser()
     ap.add_argument('--quick',action='store_true')
@@ -42,6 +53,8 @@ def main():
         e.write_json(one/'transcript.json',correct_fixture_transcript(e.read_json(plan/'transcript.json')))
         outputs.append(e.process_reel(one,cfg,preview=not args.final,engine='remotion'))
         make_reel(two,'Una consulta necesita alguien a cargo. No alcanza con responder un mensaje. Revisá el siguiente paso y quién lo sigue.')
+        plan=e.process_reel(two,cfg,plan_only=True)
+        e.write_json(two/'transcript.json',correct_second_fixture(e.read_json(plan/'transcript.json')))
         outputs.append(e.process_reel(two,cfg,preview=not args.final,engine='remotion'))
     summary=[]
     for path in outputs:

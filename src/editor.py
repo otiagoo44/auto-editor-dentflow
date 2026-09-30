@@ -216,6 +216,21 @@ def auto_keep_segments(words, duration, cfg, audio, protected=()):
     return kept
 
 
+def loudness_analysis(path):
+    """Mide la mezcla exportada, sin modificarla. LUFS integrados y pico real."""
+    scan = subprocess.run(['ffmpeg','-hide_banner','-i',str(path),'-vn','-af',
+                           'loudnorm=I=-16:TP=-1.5:LRA=11:print_format=json','-f','null','-'],
+                          capture_output=True,text=True,encoding='utf-8',errors='replace')
+    match = re.search(r'\{\s*"input_i".*?\}',scan.stderr,re.S)
+    if scan.returncode or not match:
+        raise RuntimeError('No se pudo medir LUFS/pico real de salida.')
+    data=json.loads(match[0])
+    def number(key):
+        value=float(data[key])
+        return value if math.isfinite(value) else None
+    return dict(integrated_lufs=number('input_i'),true_peak_dbtp=number('input_tp'),loudness_range_lu=number('input_lra'))
+
+
 def validate_ranges(ranges, duration, fps):
     result = []
     for pair in ranges:
@@ -613,7 +628,7 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir, engine=None):
     warnings = ["Revisar manualmente nombres, cifras, negaciones y sincronía."]
     if 'tonemap=' in colors:
         warnings.append('Fuente HDR: tonemapping lineal Mobius a Rec.709. Validar piel/blancos/saturación en teléfono; no validado aún con iPhone real.')
-    elif source_video.get('color_transfer', 'unknown') == 'unknown':
+    elif not graphic_only and source_video.get('color_transfer', 'unknown') == 'unknown':
         warnings.append('Fuente SDR sin colorimetría completa: se conserva apariencia decodificada; comprobar color.')
     if spec.get('cut_policy', {}).get('mode') == 'preserve':
         warnings.append('cut_policy.mode=preserve: autocortes desactivados incluso con --auto; decisión editorial del Reel.')
@@ -622,7 +637,8 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir, engine=None):
     audio = audio_analysis(source, duration)
     if not audio["audible"]:
         words, transcript_source = [], "Sin audio audible; ASR omitida"
-        warnings.append("Sin audio audible: cámara limpia, sin subtítulos ni autocortes.")
+        warnings.append('Comercial gráfico sin locución: subtítulos y autocortes omitidos.' if graphic_only
+                        else "Sin audio audible: cámara limpia, sin subtítulos ni autocortes.")
     else:
         try:
             words, transcript_source = get_words(source, folder, output, cfg, duration, digest, warnings)
@@ -697,7 +713,7 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir, engine=None):
         silent = sum(max(0,min(b,y)-max(a,x)) for x,y in audio['silences'])
         if audio['audible'] and b-a-silent > 2:
             warnings.append(f'Posible voz sin transcribir {a:.2f}–{b:.2f}s: escuchar; no se considera silencio ni se autocorta.')
-    if not words:
+    if not words and not graphic_only:
         warnings.append("Sin palabras: no hay subtítulos; no implica que el audio no tenga voz.")
     if not strict and events:
         warnings.append('Plan temporal legado compatible; assets también requieren allowed_assets explícita.')
@@ -729,6 +745,9 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir, engine=None):
                                         possible_horizontal_clipping=estimated_width>.85,overlays_colliding=overlaps))
     speech_windows = [[remap_time(w.start,keep),remap_time(w.end,keep)] for w in words
                       if any(a<=w.start and w.end<=b+1e-6 for a,b in keep)]
+    if options['music']['enabled'] and audio['audible'] and not speech_windows:
+        speech_windows = [[0,offset]]
+        warnings.append('Voz sin tiempos fiables: música atenuada durante todo el montaje.')
     plan = dict(version='2.1', engine=options['engine'], render=options, source_type='generated_graphics' if graphic_only else 'recording',
                 speech_windows=speech_windows, mode="auto" if automatic else "editorial", source=str(source), sha256=digest, transcript_source=transcript_source,
                 source_duration=duration, output_duration=offset, keep_segments=keep,
@@ -777,6 +796,9 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir, engine=None):
         final = run_dir / ("PREVIEW.mp4" if preview else "FINAL.mp4")
         partial.rename(final)
     final_audio = audio_analysis(final, measured)
+    final_loudness = loudness_analysis(final) if final_audio['audible'] else dict(integrated_lufs=None,true_peak_dbtp=None,loudness_range_lu=None)
+    if final_loudness['true_peak_dbtp'] is not None and final_loudness['true_peak_dbtp'] > -.5:
+        warnings.append('Pico real final por encima de -0.5 dBTP: escuchar mezcla y revisar nivel antes de publicar.')
     black_scan = subprocess.run(['ffmpeg','-hide_banner','-i',str(final),'-an','-vf',
         'blackdetect=d=0.05:pix_th=0.10:pic_th=0.98','-f','null','-'],
         capture_output=True,text=True,encoding='utf-8',errors='replace')
@@ -788,6 +810,7 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir, engine=None):
     if fingerprint(source) != digest:
         raise RuntimeError('La fuente cambió durante el proceso; no se actualizan alias.')
     plan.update(status="rendered", rendered_duration=measured, rendered_audio=final_audio,
+                rendered_loudness=final_loudness,
                 black_intervals=black_intervals,
                 video_bitrate=video.get('bit_rate'), fps=video.get('avg_frame_rate'),
                 elapsed_seconds=round(time.monotonic()-started, 2), file=str(final))
@@ -876,6 +899,23 @@ def migrate_transcript(folder, expected_digest):
     print(f'Transcript migrado explícitamente; respaldo: {backup}')
 
 
+def previous_outputs(folder):
+    """Identifica salidas previas sin presentarlas como resultado de una corrida fallida."""
+    result = []
+    for name in ('VIDEO_PREVIEW', 'VIDEO_BORRADOR'):
+        path = folder/'OUTPUT'/(name+'.mp4')
+        metadata = folder/'OUTPUT'/(name+'.json')
+        if path.is_file():
+            entry = dict(file=str(path.resolve()), previous=True, sha256=fingerprint(path))
+            try:
+                data = read_json(metadata)
+                entry.update(metadata=data, metadata_matches_file=data.get('output_sha256')==entry['sha256'])
+            except (OSError, ValueError):
+                entry['metadata_matches_file'] = False
+            result.append(entry)
+    return result
+
+
 def main():
     if len(sys.argv) > 1 and sys.argv[1] == "--asr-worker":
         transcribe_worker(Path(sys.argv[2]), Path(sys.argv[3]), read_json(Path(sys.argv[4])))
@@ -950,7 +990,9 @@ def main():
                                 file=str(result),metadata=read_json(metadata) if metadata.exists() else None))
         except Exception as exc:
             failures += 1
-            results.append(dict(reel=str(target.resolve()),status='failed',error=str(exc),previous_outputs_preserved=True))
+            results.append(dict(reel=str(target.resolve()),status='failed',error=str(exc),previous_outputs_preserved=True,
+                                previous_outputs=previous_outputs(target), requested_engine=args.engine,
+                                requested_type='plan' if args.plan_only else 'preview' if args.preview else 'final'))
             print(f"ERROR {target}: {exc}", file=sys.stderr, flush=True)
     if args.week:
         report_dir = args.target/'OUTPUT'

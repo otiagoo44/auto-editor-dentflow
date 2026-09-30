@@ -1,24 +1,56 @@
-# DentFlow AutoEditor V2 local
+# DentFlow AutoEditor 2.1 local
 
-## Checkpoint V2.1 — integración en curso (29/09/2026)
+## Uso sencillo
+
+En esta PC ya están instalados Python, FFmpeg, el modelo de voz offline, Node,
+Remotion y Chromium. Para editar:
+
+1. Copia tu grabación a `contenido-dentflow\semana-1\Reel 1\raw.mp4`.
+2. Abre **`autoeditor.bat`**, elige la carpeta y **Vista previa**. Selecciona
+   **Remotion** para los gráficos animados o deja el motor del plan.
+3. Revisa `OUTPUT\VIDEO_PREVIEW.mp4`; repite el menú con **Exportar borrador**.
+   El resultado de calidad completa es `OUTPUT\VIDEO_BORRADOR.mp4`.
+
+También puedes arrastrar una carpeta Reel o semana sobre `autoeditor.bat`.
+El menú conserva los errores en pantalla. Para una instalación nueva:
+`install.bat` prepara la base y `instalar_remotion.bat` añade el motor opcional.
+Ambos requieren red al instalar; la edición usa recursos locales.
+
+Tres comandos para preparar y exportar con Remotion (tras instalar):
+
+```powershell
+.\editar_reel.bat ".\contenido-dentflow\semana-1\Reel 1" --auto --plan-only
+.\editar_reel.bat ".\contenido-dentflow\semana-1\Reel 1" --auto --engine remotion --preview
+.\editar_reel.bat ".\contenido-dentflow\semana-1\Reel 1" --auto --engine remotion
+```
+
+Sin plan, ambos motores producen cámara y subtítulos; los gráficos requieren
+beats o eventos aprobados. El plan R1 ya referencia C/E, pero las frases se deben
+contrastar con tu toma. Para volver al motor anterior, cambia a `--engine ffmpeg`.
+
+## V2.1 — implementación y pruebas (29/09/2026)
 
 Rama `v2.1-remotion`. Se recuperaron los cambios locales de la sesión anterior
 en `4f33bac`, conservando los commits `b8ab8a5` y `3a9c802`.
-Este checkpoint se sube por pedido del usuario; **V2.1 todavía no está validada**.
+El checkpoint `3956e3a` se subió por pedido del usuario. Las correcciones finales
+quedan en esta rama local, según la indicación posterior de continuar sin subir todo.
 
 - Añadidos motor Remotion opcional (`--engine remotion`), puente de tiempos/recursos,
   composiciones educativa/comercial, seis plantillas, instalador y menú `autoeditor.bat`.
 - Ejemplo comercial: `ejemplos/Comercial/edicion.json`. No requiere cámara; música apagada.
-- Base antes de integrar: 31 pruebas descubiertas, 30 aprobadas, 1 ASR opt-in omitida.
-  Prueba adicional de política de cortes aprobada; diagnóstico offline aprobado.
+- Regresión completa en Windows: **44 aprobadas, 0 fallos, 0 omitidas** en 273,16 s,
+  activando renders Remotion y ASR local. Incluye lote 5/0 y 4/1 con hashes preservados.
 - TypeScript compila con Remotion 4.0.530 y Zod 4.5.4 fijados.
-- Primera ejecución de `test_motion.py`: 6 pruebas de contrato aprobadas y
-  **2 errores de render** en la comprobación final de FPS/formato de píxel.
-  Investigar metadata del MP4 Remotion y su conversión antes de dar la versión por lista.
-- Pendientes: corregir esos errores, ejecutar regresión completa, revisar demos
-  completas y probar dos grabaciones reales de iPhone, aún no disponibles.
-- El texto posterior documenta V2 y sus verificaciones anteriores; no demuestra
-  aceptación de la nueva integración. No se versionan videos, caches ni node_modules.
+- Corregidos rango de color (`bt709/yuv420p`), duración AAC, mezcla con música,
+  reporte de errores y recursos faltantes. Se mide LUFS/pico real de cada salida audible.
+- Tres demos sintéticas exportadas a 1080×1920 y revisadas por fotogramas:
+  comercial de 28 s, educativo C/E de 51 s y cámara/subtítulos de unos 10 s.
+- Instalador Remotion ejecutado de principio a fin; tipos y versiones verificados.
+  Detalles, evidencia y límites: [informe de cierre](auditorias_mega-prompts/CIERRE_V21.md).
+- **Pendiente de aceptación audiovisual:** dos tomas reales de iPhone y revisión
+  humana de voz/rostro/lectura en teléfono. Los sintéticos no sustituyen esa prueba.
+- Las secciones históricas de V2 conservan sus resultados originales.
+  No se versionan videos, caches ni node_modules.
 
 Una grabación → montaje local → revisión, sin APIs de pago por render.
 **Faltan tus grabaciones iPhone R1/R2 para validar calidad editorial real.**
@@ -271,11 +303,12 @@ interpretar (R01 32–34, R02 32–34); ausencia de zoom periódico (R06 15–16
 montaje antes de adornos (T02 179); foco de UI y jerarquía (T08 105, T06 103).
 No se copiaron frases, imágenes ni diseños de referentes a los assets DentFlow.
 
-**FFmpeg suficiente por ahora.** Remotion queda diferido hasta evaluar R1/R2 reales.
+**Decisión histórica de V2, superada por la integración V2.1 de esta rama.** Remotion quedó diferido hasta evaluar R1/R2 reales.
 Sólo ante una composición que lo justifique: POC aislado de 10–15 s con el mismo
 JSON/timeline, export consumible por FFmpeg y fallback. Antes de integrarlo,
 verificar documentación/licencia vigente, RAM/rendimiento y aprobación de complejidad.
-No se agregó React/Node a la instalación principal.
+No se agregó React/Node a la instalación principal de V2. En V2.1 se instala de
+forma opcional con `instalar_remotion.bat`; `install.bat` sigue independiente.
 
 Runtime fuerza modelo offline, HF_HUB_OFFLINE y desactiva telemetría Hugging Face;
 no importa Watch ni SDKs comerciales. Instalación y estudio sí descargan. Para
@@ -351,3 +384,124 @@ cinco raw sintéticos distintos, cinco previews, reportes de 5/0 y 4/1 en OUTPUT
 Las cinco carpetas quedaron válidas; `semana_cinco_evidence.json` registra los cinco
 SHA preservados tras el fallo. `qa_outputs.json` y `evidence/` guardan diagnóstico,
 pruebas y comprobaciones de outputs. No se agregan estos MP4 ni transcripts a Git.
+
+## Contrato Remotion 2.1
+
+`edicion.json` sigue siendo la única configuración manual. Puedes añadir:
+
+```json
+"render": {
+  "engine": "remotion",
+  "template": "educativo",
+  "music": {"enabled": false}
+}
+```
+
+`--engine` explícito gana al motor del plan. El valor predeterminado sigue siendo
+FFmpeg. Una petición de Remotion que falle conserva las salidas previas y explica
+cómo instalarlo o volver a FFmpeg; no cambia silenciosamente de motor.
+
+Los eventos/beat de V2 siguen funcionando. Para gráficos editables, añade
+`template` y `params` al beat con sus frases, propósito y aprobación habituales:
+
+```json
+{
+  "id": "seguimiento", "purpose": "Explicar quién sigue la consulta",
+  "match_text": "cada consulta necesita un responsable", "duration": 4,
+  "template": "CRMHighlight", "layout": "full", "demo": true,
+  "params": {
+    "title": "Un responsable. Un próximo paso.",
+    "items": [
+      {"label": "RESPONSABLE", "value": "Recepción", "at_seconds": 0},
+      {"label": "PRÓXIMA ACCIÓN", "value": "Revisar hoy", "at_seconds": 0.8}
+    ]
+  },
+  "approved": true, "fallback": "camera",
+  "reason": "Ejemplo ficticio para explicar la responsabilidad"
+}
+```
+
+Catálogo: `QuestionHook`, `AnimatedMessages`, `CRMHighlight`, `StepDiagram`,
+`ScreenshotFocus`, `SummaryCTA`. `params` acepta `title`, `subtitle`, `eyebrow`,
+`cta`, `theme:dark|light` e `items` (máximo cuatro). Cada item tiene `label`,
+`value`, `at_seconds` **relativo a esa escena**. Para voz variable, prefiere un
+beat por frase a entradas por segundos. Texto largo se rechaza; no se acepta
+HTML, código, URLs de medios ni CSS arbitrario. Los recursos ilustrativos de CRM
+y mensajes requieren `demo:true`. Un asset sigue mostrando su contenido autorizado,
+aunque tenga `template:CRMHighlight`; no se convierte automáticamente en una UI.
+
+Música apagada por defecto. Para habilitar una pista propia/autorizada: inclúyela
+en `allowed_assets` y usa `music:{enabled:true,file:"Assets/musica.wav",
+rights_declared:true,volume:0.10,ducking:0.35}`. Debe cubrir todo el montaje.
+El volumen se atenúa durante las palabras reconocidas, con entrada/salida de 1 s;
+sin tiempos de voz fiables se atenúa toda la pieza. Se nivela la voz antes de mezclar
+y se normaliza la mezcla final cuando `audio.normalize:true`. Escucha el resultado:
+una declaración de derechos no prueba la licencia y una medición no verifica claridad.
+
+Python genera el A-roll cortado H.264/AAC CFR/Rec.709 y props con tiempos de montaje.
+Remotion renderiza el cuadro completo con subtítulos JSON; no se quema ASS antes.
+Los recursos temporales del job se eliminan al terminar; `remotion_props.json`
+queda como evidencia de tiempos, y se regenera desde el plan para cada ejecución.
+No edites props manualmente ni lo uses como proyecto persistente de Studio.
+Los pasos de procesamiento conservan logs y validan codec, tamaño, FPS, decode
+completo, audio y duración antes de actualizar un alias.
+
+Ejemplo comercial sin cámara, siete escenas y seis componentes en 28 segundos:
+
+```powershell
+.\editar_reel.bat ".\ejemplos\Comercial" --preview
+.\editar_reel.bat ".\ejemplos\Comercial"
+```
+
+Sus textos/datos son ilustrativos, no una captura verificada del producto.
+No necesita `raw.mp4`: usa `render.template:comercial`, `duration_seconds` y
+eventos full aprobados que cubran toda la duración. Una escena faltante produce
+error recuperable. Para comercial con voz, proporciona `source` y beats por frases.
+Comercial sin cámara requiere Remotion; FFmpeg sigue disponible para Reels educativos.
+
+### Instalación y reproducción
+
+Versiones exactas: Remotion y paquetes `@remotion/*` 4.0.530; Zod 4.5.4 conforme
+al instalador de esa versión. `package-lock.json` fija dependencias transitivas.
+Se usa `<Video>`/`<Audio>` de `@remotion/media` con A-roll compatible; no fue necesario
+un fallback manual a `OffthreadVideo`. Arial del sistema, sin descarga de fuentes
+durante render. El render invoca el CLI instalado con Node, argumentos separados
+y props por archivo; no ejecuta `npx` ni descarga dependencias durante la edición.
+
+Documentación verificada: [CLI](https://www.remotion.dev/docs/cli/render),
+[Video](https://www.remotion.dev/docs/media/video) y
+[licencia](https://www.remotion.dev/docs/license/faq). La licencia gratuita permite
+uso individual y equipos de hasta tres personas bajo sus términos; revisar las
+condiciones si cambia el equipo o la forma de distribuir el software.
+
+```powershell
+.\editar_reel.bat --diagnose --engine remotion
+cd remotion
+npm.cmd run typecheck
+npm.cmd run studio
+```
+
+Studio permite inspeccionar una composición de ejemplo en `http://localhost:3000`.
+Para revisar tu Reel usa su MP4 generado; Studio no retiene el material temporal.
+Renders secuenciales con concurrencia 1, adecuados como punto de partida para esta
+PC de 4 GB. ASR se libera antes de lanzar el navegador. No se promete un tiempo fijo.
+
+Pruebas nuevas y demos persistentes (fuera de tus carpetas de grabación):
+
+```powershell
+$env:DENTFLOW_REMOTION_TESTS = '1'
+$env:DENTFLOW_ASR_SAMPLE = 'RUTA_A_UN_CLIP_DE_VOZ_LOCAL'
+& "$env:LOCALAPPDATA\DentFlow\venv\Scripts\python.exe" -m unittest discover -s tests -v
+& "$env:LOCALAPPDATA\DentFlow\venv\Scripts\python.exe" tests/render_motion_acceptance.py --final --educativo
+```
+
+### Revisión de 90 segundos antes de publicar
+
+- Mira la pieza completa y escucha sus uniones; verifica negaciones, cifras y nombres.
+- Comprueba cara/manos y lee cada gráfico en el teléfono, con subtítulos visibles.
+- Confirma que las demos están rotuladas y no contienen datos de pacientes.
+- Comprueba que la acción final se puede realizar y que no promete resultados inventados.
+- Publica el `VIDEO_BORRADOR.mp4` de 1080×1920 revisado; la preview es de 360×640.
+
+La duración de revisión depende de la pieza. Dos tomas propias de iPhone y su
+revisión humana siguen siendo necesarias para aceptar la calidad editorial real.

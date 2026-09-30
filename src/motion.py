@@ -49,6 +49,8 @@ def params(value):
 
 
 def render_options(spec, override=None):
+    if len(spec.get('beats', [])) + len(spec.get('events', [])) > 200:
+        raise ValueError('Máximo 200 intervenciones por Reel; divide piezas largas.')
     value = spec.get('render', {})
     if not isinstance(value, dict) or set(value) - {'engine', 'template', 'music', 'captions', 'duration_seconds'}:
         raise ValueError('render admite engine, template, music, captions y duration_seconds.')
@@ -131,6 +133,8 @@ def build_props(plan, options, job_id, base_video, assets, music=None):
 def render(cut, out, plan, spec, options, folder, run_dir, api):
     """Stages sólo material validado; subprocess sin shell ni npx/descargas runtime."""
     node, cli, browser = runtime()
+    if plan['output_duration'] > 600:
+        raise ValueError('Remotion local admite hasta 10 minutos por pieza; divide el montaje.')
     jobs = ROOT / 'public/jobs'
     jobs.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='job_', dir=jobs) as directory:
@@ -139,8 +143,11 @@ def render(cut, out, plan, spec, options, folder, run_dir, api):
         ar = stage/'aroll.mp4'
         cfg = plan['config']
         # Ya CFR/Rec.709. Sólo convertir PCM -> AAC; nunca quemar ASS/overlays.
+        audio_filter = []
+        if options['music']['enabled'] and cfg['audio']['normalize'] and plan['audio_analysis']['audible']:
+            audio_filter = ['-af', f"loudnorm=I={cfg['audio']['target_lufs']}:LRA=11:TP=-1.5"]
         api.run(api.ffmpeg_base(cfg) + ['-i', cut, '-map', '0:v:0', '-map', '0:a:0',
-                '-c:v', 'copy', '-c:a', 'aac', '-ar', '48000', '-b:a', '160k', '-movflags', '+faststart', ar])
+                '-c:v', 'copy'] + audio_filter + ['-c:a', 'aac', '-ar', '48000', '-b:a', '160k', '-movflags', '+faststart', ar])
         ar_probe = api.probe(ar)
         plan['mezzanine_duration'] = float(next(s for s in ar_probe['streams'] if s['codec_type']=='video')['duration'])
         assets = {}
@@ -192,23 +199,31 @@ def render(cut, out, plan, spec, options, folder, run_dir, api):
         rendered = stage/'render.mp4'
         command = [node, str(cli), 'render', 'src/index.ts', composition, str(rendered),
                    '--props', str(props_path), '--concurrency', '1', '--codec', 'h264', '--pixel-format', 'yuv420p',
-                   '--crf', str(cfg['video']['crf']), '--audio-codec', 'aac', '--audio-sample-rate', '48000',
+                   '--crf', str(cfg['video']['crf']), '--color-space', 'bt709', '--audio-codec', 'aac', '--audio-sample-rate', '48000',
                    '--browser-executable', str(browser), '--log', 'error']
         started = time.monotonic()
         with (run_dir/'remotion_log.txt').open('w', encoding='utf-8') as log:
             try:
-                result = subprocess.run(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT,
-                                        shell=False, timeout=3600, env=dict(os.environ, REMOTION_DISABLE_TELEMETRY='1'))
+                process = subprocess.Popen(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT,
+                                           shell=False, env=dict(os.environ, REMOTION_DISABLE_TELEMETRY='1'))
+                returncode = process.wait(timeout=3600)
             except subprocess.TimeoutExpired as exc:
+                if os.name == 'nt':
+                    subprocess.run(['taskkill','/PID',str(process.pid),'/T','/F'],capture_output=True)
+                else:
+                    process.kill()
+                process.wait()
                 raise RuntimeError('Remotion superó 60 minutos. Revisa remotion_log.txt; reduce duración o usa FFmpeg.') from exc
-        if result.returncode:
-            raise RuntimeError('Remotion falló. Revisa remotion_log.txt; instala el motor o vuelve a --engine ffmpeg.')
+        if returncode:
+            detail = (run_dir/'remotion_log.txt').read_text(encoding='utf-8',errors='replace')[-2000:]
+            raise RuntimeError('Remotion falló. Revisa remotion_log.txt; instala el motor o vuelve a --engine ffmpeg.\n'+detail)
         plan['remotion_seconds'] = round(time.monotonic()-started,2)
         # Normalización final de la mezcla (una vez); también asegura +faststart/AAC 48k.
         audible = api.audio_analysis(rendered, plan['output_duration'])['audible']
         af = f"loudnorm=I={cfg['audio']['target_lufs']}:LRA=11:TP=-1.5" if cfg['audio']['normalize'] and audible else 'anull'
         api.run(api.ffmpeg_base(cfg)+['-i',rendered,'-map','0:v:0','-map','0:a:0','-c:v','copy',
-                '-af',af,'-c:a','aac','-ar','48000','-b:a','160k','-movflags','+faststart',out])
+                '-af',af,'-t',str(props['duration_frames']/props['fps']),
+                '-c:a','aac','-ar','48000','-b:a','160k','-movflags','+faststart',out])
         plan['staging'] = 'temporales eliminados; props preservadas como evidencia, regenerar desde edicion.json'
 
 

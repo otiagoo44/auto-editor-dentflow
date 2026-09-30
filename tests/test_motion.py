@@ -50,6 +50,30 @@ class MotionContractTests(unittest.TestCase):
                   {'items':[{'label':'A','at_seconds':2},{'label':'B','at_seconds':1}]}):
             with self.assertRaises(ValueError):m.params(p)
 
+    def test_missing_asset_falls_back_and_commercial_rejects_uncovered_timeline(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder=Path(td);fixture(folder,2)
+            spec=dict(schema_version=2,allowed_assets=['missing.png'],events=[dict(type='asset',file='missing.png',
+                approved=True,start=0,end=2,reason='faltante')])
+            e.write_json(folder/'edicion.json',spec)
+            output=e.process_reel(folder,config(),plan_only=True,engine='remotion')
+            plan=e.read_json(output/'plan_edicion.json')
+            self.assertEqual(plan['events'],[])
+            self.assertTrue(any('fallback=camera' in w for w in plan['warnings']))
+            spec['render']=dict(engine='remotion',template='comercial',duration_seconds=2)
+            e.write_json(folder/'edicion.json',spec)
+            with self.assertRaisesRegex(ValueError,'cubran toda la duración'):
+                e.process_reel(folder,config(),plan_only=True)
+
+    def test_previous_output_metadata_identifies_stale_hash(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder=Path(td);(folder/'OUTPUT').mkdir()
+            file=folder/'OUTPUT/VIDEO_PREVIEW.mp4';file.write_bytes(b'previous')
+            e.write_json(folder/'OUTPUT/VIDEO_PREVIEW.json',dict(output_sha256=e.fingerprint(file),resolution=[360,640]))
+            self.assertTrue(e.previous_outputs(folder)[0]['metadata_matches_file'])
+            file.write_bytes(b'changed')
+            self.assertFalse(e.previous_outputs(folder)[0]['metadata_matches_file'])
+
     def test_missing_unselected_allowed_asset_does_not_suppress_valid_asset(self):
         with tempfile.TemporaryDirectory() as td:
             folder=Path(td);(folder/'ok.png').write_bytes(b'x')
@@ -69,22 +93,51 @@ class MotionContractTests(unittest.TestCase):
 
 @unittest.skipUnless(os.environ.get('DENTFLOW_REMOTION_TESTS')=='1','Remotion render opt-in: DENTFLOW_REMOTION_TESTS=1')
 class MotionRenderTests(unittest.TestCase):
+    @unittest.skipUnless(os.name=='nt','BAT de Windows')
+    def test_week_remotion_reports_failure_and_preserves_previous_aliases(self):
+        import subprocess
+        with tempfile.TemporaryDirectory(prefix="Semana motion ñ O'Brien ") as td:
+            week=Path(td)
+            for i in range(1,6):
+                reel=week/f'Reel {i}';fixture(reel,1+i/10)
+                e.write_json(reel/'edicion.json',dict(schema_version=2,render=dict(engine='remotion'),events=[
+                    dict(type='text',text=f'Pregunta {i}',start=0,end=1,approved=True,reason='Fixture distinto')]))
+            command=[str(e.ROOT/'editar_semana.bat'),str(week),'--auto','--preview','--engine','remotion']
+            result=subprocess.run(command,capture_output=True,text=True,encoding='utf-8',errors='replace')
+            self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+            report=e.read_json(sorted((week/'OUTPUT').glob('lote_*.json'))[-1])
+            self.assertEqual((report['passed'],report['failed']),(5,0))
+            old=[e.fingerprint(week/f'Reel {i}/OUTPUT/VIDEO_PREVIEW.mp4') for i in range(1,6)]
+            for i in range(1,6):
+                path=week/f'Reel {i}/edicion.json';spec=e.read_json(path)
+                if i==3:spec['source']='missing.mp4'
+                e.write_json(path,spec)
+            result=subprocess.run(command,capture_output=True,text=True,encoding='utf-8',errors='replace')
+            self.assertEqual(result.returncode,1,result.stdout+result.stderr)
+            report=e.read_json(sorted((week/'OUTPUT').glob('lote_*.json'))[-1])
+            self.assertEqual((report['passed'],report['failed']),(4,1))
+            failed=next(r for r in report['results'] if r['status']=='failed')
+            self.assertTrue(failed['previous_outputs'][0]['metadata_matches_file'])
+            self.assertEqual(failed['previous_outputs'][0]['sha256'],old[2])
+            self.assertEqual(e.fingerprint(week/'Reel 3/OUTPUT/VIDEO_PREVIEW.mp4'),old[2])
+
     def test_three_cuts_png_mp4_captions_no_double_subtitles_and_finite_overlay(self):
         with tempfile.TemporaryDirectory(prefix="Motion ñ O'Brien ") as td:
-            folder=Path(td);fixture(folder,10,audio=True)
+            folder=Path(td);fixture(folder,12,audio=True)
             e.run(['ffmpeg','-v','error','-n','-f','lavfi','-i','color=c=lime:s=320x180','-frames:v','1','-threads','1',folder/'green.png'])
             e.run(['ffmpeg','-v','error','-n','-f','lavfi','-i','color=c=blue:s=320x180:r=30:d=2','-c:v','libx264','-threads','1',folder/'blue.mp4'])
-            words=[e.Word(.2,.6,'No'),e.Word(.6,1.3,'16:00.'),e.Word(8.1,8.6,'Próxima'),e.Word(8.6,9.3,'acción.')]
-            e.write_json(folder/'transcript.json',e.transcript_document(words,e.fingerprint(folder/'raw.mp4'),10))
-            e.write_json(folder/'edicion.json',dict(schema_version=2,keep_segments=[[0,2],[4,6],[8,10]],allowed_assets=['green.png','blue.mp4'],events=[
+            words=[e.Word(.2,.6,'No'),e.Word(.6,1.3,'16:00.'),e.Word(10.1,10.6,'Próxima'),e.Word(10.6,11.3,'acción.')]
+            e.write_json(folder/'transcript.json',e.transcript_document(words,e.fingerprint(folder/'raw.mp4'),12))
+            e.write_json(folder/'edicion.json',dict(schema_version=2,keep_segments=[[0,2],[4,8],[10,12]],allowed_assets=['green.png','blue.mp4'],events=[
                 dict(type='asset',file='green.png',start=.3,end=1.7,reason='PNG',approved=True,layout='full',animation='none'),
                 dict(type='asset',file='blue.mp4',start=4.2,end=5.7,reason='MP4',approved=True,layout='full',animation='none'),
-                dict(type='motion',template='SummaryCTA',params={'title':'Un siguiente paso','cta':'Revisá una consulta'},start=8.1,end=9.5,reason='CTA',approved=True)]))
+                dict(type='motion',template='QuestionHook',params={'title':'¿Quién sigue?'},start=6,end=7.8,reason='Pregunta',approved=True),
+                dict(type='motion',template='SummaryCTA',params={'title':'Un siguiente paso','cta':'Revisá una consulta'},start=10.1,end=11.5,reason='CTA',approved=True)]))
             final=e.process_reel(folder,config(),preview=True,engine='remotion')
             plan=e.read_json(final.parent/'plan_edicion.json');props=e.read_json(final.parent/'remotion_props.json')
-            self.assertAlmostEqual(e.ffprobe_duration(final),6,delta=.10)
+            self.assertAlmostEqual(e.ffprobe_duration(final),8,delta=1/30+.001)
             self.assertFalse((final.parent/'subtitulos.ass').exists())
-            self.assertEqual([s['start_frame'] for s in props['scenes']],[9,66,123])
+            self.assertEqual([s['start_frame'] for s in props['scenes']],[9,66,120,183])
             self.assertEqual(plan['engine'],'remotion')
             self.assertGreater(center_pixel(final,1)[1],180)
             self.assertGreater(center_pixel(final,3)[2],180)
@@ -96,10 +149,39 @@ class MotionRenderTests(unittest.TestCase):
             folder=Path(td)
             e.write_json(folder/'edicion.json',dict(schema_version=2,render=dict(engine='remotion',template='comercial',duration_seconds=2),
                 events=[dict(type='motion',template='QuestionHook',params={'title':'¿Quién sigue esta consulta?'},layout='full',start=0,end=2,approved=True,reason='Pregunta')]))
-            final=e.process_reel(folder,config(),preview=True)
+            # El CLI debe funcionar sin conexiones de Node fuera de loopback.
+            guard=folder/'offline.cjs'
+            guard.write_text("const net=require('node:net'); const dns=require('node:dns');\n"
+                "const allowed=h=>!h||['127.0.0.1','localhost','::1','[::1]'].includes(h);\n"
+                "const lookup=dns.lookup; dns.lookup=function(h,...a){if(!allowed(h)&&!['::','0.0.0.0'].includes(h))throw Error('RED EXTERNA PROHIBIDA: '+h);return lookup.call(this,h,...a)};\n"
+                "const connect=net.Socket.prototype.connect; net.Socket.prototype.connect=function(...a){let o=Array.isArray(a[0])?a[0][0]:a[0];let h=typeof o==='object'?(o.host||o.hostname):(typeof a[1]==='string'?a[1]:null);if(!allowed(h))throw Error('RED EXTERNA PROHIBIDA: '+h);return connect.apply(this,a)};\n",encoding='utf-8')
+            with patch.dict(os.environ,NODE_OPTIONS='--require "'+guard.as_posix()+'"'):
+                final=e.process_reel(folder,config(),preview=True)
             self.assertFalse((folder/'raw.mp4').exists())
             self.assertFalse(e.read_json(final.parent/'plan_edicion.json')['rendered_audio']['audible'])
             self.assertEqual(e.read_json(final.parent/'metadata.json')['resolution'],[360,640])
+
+    def test_authorized_local_audio_mix_and_preview_preserves_final(self):
+        with tempfile.TemporaryDirectory(prefix="Música ñ O'Brien ") as td:
+            folder=Path(td);fixture(folder,2,audio=True)
+            e.run(['ffmpeg','-v','error','-n','-f','lavfi','-i','sine=frequency=220:sample_rate=48000:duration=3',folder/'tone.wav'])
+            e.write_json(folder/'transcript.json',e.transcript_document([e.Word(.3,1.3,'No dieciséis.')],e.fingerprint(folder/'raw.mp4'),2))
+            spec=dict(schema_version=2,allowed_assets=['tone.wav'],render=dict(engine='remotion',music=dict(enabled=True,file='tone.wav',rights_declared=True)))
+            e.write_json(folder/'edicion.json',spec)
+            cfg=config();cfg['video'].update(width=1080,height=1920)
+            final=e.process_reel(folder,cfg)
+            alias=folder/'OUTPUT/VIDEO_BORRADOR.mp4';digest=e.fingerprint(alias)
+            preview=e.process_reel(folder,cfg,preview=True)
+            self.assertEqual(e.fingerprint(alias),digest)
+            sound=e.read_json(preview.parent/'plan_edicion.json')['rendered_audio']
+            self.assertTrue(sound['audible']);self.assertLess(sound['peak_db'],-.1)
+            loudness=e.read_json(preview.parent/'plan_edicion.json')['rendered_loudness']
+            self.assertIsNotNone(loudness['integrated_lufs'])
+            self.assertLess(loudness['true_peak_dbtp'],0)
+            props=e.read_json(preview.parent/'remotion_props.json')
+            self.assertEqual(props['music']['volume'],.1)
+            self.assertEqual(props['speech_windows'],[[.3,1.3]])
+            self.assertEqual(e.read_json(final.parent/'metadata.json')['resolution'],[1080,1920])
 
 
 if __name__=='__main__':unittest.main()
