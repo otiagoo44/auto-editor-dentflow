@@ -1,9 +1,10 @@
-import test from "node:test";
+import test, { after } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { db, one } from "../lib/db";
+import { closeDb, db, one } from "../lib/db";
 import { createJob, lease } from "../lib/jobs";
 import { contents } from "../lib/content";
+after(closeDb);
 test(
   "PostgreSQL migration and mutually exclusive worker lease",
   { skip: !process.env.DATABASE_URL },

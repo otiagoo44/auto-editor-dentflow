@@ -108,4 +108,16 @@ export async function transaction<T>(action: () => Promise<T>): Promise<T> {
 export async function one(sql: string, params: unknown[] = []) {
   return (await db(sql, params))[0];
 }
+/** Close pooled connections for one-shot scripts and integration tests. */
+export async function closeDb() {
+  if (pg) {
+    await pg.end({ timeout: 5 });
+    pg = undefined;
+  }
+  if (sqlite) {
+    sqlite.close();
+    sqlite = undefined;
+  }
+  initialized = undefined;
+}
 export const unpack = <T>(row: Row): T => JSON.parse(String(row.data));
