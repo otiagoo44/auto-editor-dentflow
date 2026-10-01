@@ -330,12 +330,20 @@ export default function Studio() {
   const contentCopy = (
     <>
       <div className="eyebrow">
-        {item?.source_version} · {item?.id}
+        {item?.id.startsWith("EXTRA-") ? "Contenido propio" : item?.id}
       </div>
       <h2>{item?.title}</h2>
       {item?.demo_gate && (
         <div className="warning">
-          {item.demo_gate}
+          <strong>{item.demo_gate.split("\n")[0]}</strong>
+          {item.demo_gate.includes("\n") && (
+            <details>
+              <summary>Ver control funcional y guion alternativo</summary>
+              <p style={{ whiteSpace: "pre-wrap" }}>
+                {item.demo_gate.split("\n").slice(1).join("\n")}
+              </p>
+            </details>
+          )}
           <label>
             <input
               type="checkbox"
@@ -597,7 +605,7 @@ export default function Studio() {
                 </div>
               )}
               {[...new Set(items.map((c) => c.week))]
-                .sort((a, b) => a - b)
+                .sort((a, b) => (a || 99) - (b || 99))
                 .map((week) => (
                   <section key={week}>
                     <div className="section-line">
@@ -612,7 +620,9 @@ export default function Studio() {
                         .map((c) => (
                           <article className="content-card" key={c.id}>
                             <div className="card-top">
-                              <span>{c.id}</span>
+                              <span>
+                                {c.id.startsWith("EXTRA-") ? "Propio" : c.id}
+                              </span>
                               <span className="badge">
                                 {c.id === "DEMO-TECNICA"
                                   ? "Demo técnica"
@@ -1405,17 +1415,46 @@ export default function Studio() {
               ) : (
                 <div className="job-list">
                   {jobs.map((j) => (
-                    <button key={j.id} onClick={() => openJob(j)}>
-                      <div>
-                        <strong>{j.content.title}</strong>
-                        <small>
-                          {date(Number(j.created_at))} · {j.settings.engine} ·{" "}
-                          {j.settings.kind === "final" ? "Final" : "Borrador"}
-                        </small>
-                      </div>
-                      {badge(j)}
-                      <span>→</span>
-                    </button>
+                    <div key={j.id}>
+                      <button onClick={() => openJob(j)}>
+                        <div>
+                          <strong>{j.content.title}</strong>
+                          <small>
+                            {date(Number(j.created_at))} · {j.settings.engine} ·{" "}
+                            {j.settings.kind === "final" ? "Final" : "Borrador"}
+                          </small>
+                        </div>
+                        {badge(j)}
+                        <span>→</span>
+                      </button>
+                      <button
+                        disabled={
+                          busy ||
+                          jobs.some(
+                            (other) =>
+                              other.project_id === j.project_id &&
+                              !terminal.includes(other.status),
+                          )
+                        }
+                        onClick={() => {
+                          if (
+                            confirm(
+                              "¿Borrar todas las versiones de este proyecto? La grabación y el guion se conservan.",
+                            )
+                          )
+                            act(async () => {
+                              await api(`projects/${j.project_id}`, "DELETE");
+                              if (current?.project_id === j.project_id)
+                                setJobId("");
+                              setNotice(
+                                "Proyecto eliminado. La grabación sigue en tu biblioteca.",
+                              );
+                            });
+                        }}
+                      >
+                        Borrar proyecto
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
@@ -1486,7 +1525,9 @@ export default function Studio() {
                   )
                   .map((a) => (
                     <article className="panel asset-card" key={a.id}>
-                      {a.mime.startsWith("image/") ? (
+                      {a.status === "deleting" ? (
+                        <p>EliminaciÃ³n pendiente</p>
+                      ) : a.mime.startsWith("image/") ? (
                         <img src={`/api/assets/${a.id}/file`} alt={a.name} />
                       ) : a.mime.startsWith("audio/") ? (
                         <audio controls src={`/api/assets/${a.id}/file`} />
@@ -1505,8 +1546,25 @@ export default function Studio() {
                         ))}
                       </div>
                       <span className="badge">
-                        {a.approved ? "Aprobado" : "Por revisar"}
+                        {a.status === "deleting" ? "EliminaciÃ³n pendiente" : a.approved ? "Aprobado" : "Por revisar"}
                       </span>
+                      <button
+                        disabled={busy}
+                        onClick={() => {
+                          if (
+                            confirm(
+                              "¿Borrar este archivo de Studio? Solo se permite si ningún montaje lo usa.",
+                            )
+                          )
+                            act(async () => {
+                              await api(`assets/${a.id}`, "DELETE");
+                              if (assetId === a.id) setAssetId("");
+                              setNotice("Archivo eliminado.");
+                            });
+                        }}
+                      >
+                        {a.status === "deleting" ? "Reintentar borrado" : "Borrar archivo"}
+                      </button>
                     </article>
                   ))}
               </div>

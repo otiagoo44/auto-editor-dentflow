@@ -3,6 +3,14 @@ import { db, one, unpack } from "./db";
 import { contentSchema, Content } from "./contracts";
 import { owner, now } from "./config";
 import { check, hash } from "./security";
+import seed from "../data/seed-v3.json";
+import { adaptV3 } from "./seed";
+
+// Only source-authored titles and exact spoken triggers are suggested automatically.
+// Product demonstrations retain their D1-D4 gate and need owner-approved footage.
+export function seedContent(): Content[] {
+  return adaptV3(seed);
+}
 
 export const demo: Content = contentSchema.parse({
   id: "DEMO-TECNICA",
@@ -40,11 +48,19 @@ export const demo: Content = contentSchema.parse({
   ],
 });
 
+let seeded: Promise<void> | undefined;
 export async function ensureDemo() {
-  await db(
-    "INSERT INTO content_items (id,owner_id,source_version,data) VALUES ($1,$2,$3,$4) ON CONFLICT(id) DO NOTHING",
-    [demo.id, owner, demo.source_version, JSON.stringify(demo)],
-  );
+  seeded ||= (async () => {
+    for (const content of [demo, ...seedContent()])
+      await db(
+        "INSERT INTO content_items (id,owner_id,source_version,data) VALUES ($1,$2,$3,$4) ON CONFLICT(id) DO NOTHING",
+        [content.id, owner, content.source_version, JSON.stringify(content)],
+      );
+  })().catch((error) => {
+    seeded = undefined;
+    throw error;
+  });
+  await seeded;
 }
 export async function contents() {
   await ensureDemo();
@@ -93,14 +109,20 @@ export async function importContent(input: unknown) {
   const version =
     document.source_version ||
     "import-" + hash(JSON.stringify(input)).slice(0, 12);
-  const parsed = items.map((raw) => {
-    const x = raw as Record<string, unknown>;
-    return contentSchema.parse({
-      ...x,
-      source_version: x.source_version || version,
-      original: raw,
-    });
-  });
+  const parsed =
+    typeof input === "object" &&
+    input &&
+    "source_document" in input &&
+    "demo_gates" in input
+      ? adaptV3(input)
+      : items.map((raw) => {
+          const x = raw as Record<string, unknown>;
+          return contentSchema.parse({
+            ...x,
+            source_version: x.source_version || version,
+            original: raw,
+          });
+        });
   check(
     new Set(parsed.map((x) => x.id)).size === parsed.length,
     400,

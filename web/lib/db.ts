@@ -2,12 +2,29 @@ import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import postgres from "postgres";
+import { AsyncLocalStorage } from "node:async_hooks";
 import { dataDir, remote } from "./config";
 
 type Row = Record<string, unknown>;
 let sqlite: DatabaseSync | undefined;
 let pg: ReturnType<typeof postgres> | undefined;
 let initialized: Promise<void> | undefined;
+type Query = (sql: string, params?: unknown[]) => Promise<Row[]>;
+const context = new AsyncLocalStorage<Query>();
+let localQueue = Promise.resolve();
+async function exclusive<T>(action: () => Promise<T>): Promise<T> {
+  const previous = localQueue;
+  let release!: () => void;
+  localQueue = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await previous;
+  try {
+    return await action();
+  } finally {
+    release();
+  }
+}
 
 // The same migration runs on SQLite locally and PostgreSQL remotely.
 export const migration = [
@@ -47,12 +64,46 @@ async function execute(sql: string, params: unknown[] = []): Promise<Row[]> {
     .prepare(query)
     .all(...(values as (string | number | null)[])) as Row[];
 }
-export async function db(sql: string, params: unknown[] = []): Promise<Row[]> {
+async function initialize() {
   initialized ||= (async () => {
     for (const stmt of migration) await execute(stmt);
-  })();
+  })().catch((error) => {
+    initialized = undefined;
+    throw error;
+  });
   await initialized;
-  return execute(sql, params);
+}
+export async function db(sql: string, params: unknown[] = []): Promise<Row[]> {
+  const query = context.getStore();
+  if (query) return query(sql, params);
+  await initialize();
+  return remote()
+    ? execute(sql, params)
+    : exclusive(() => execute(sql, params));
+}
+export async function transaction<T>(action: () => Promise<T>): Promise<T> {
+  if (context.getStore()) return action();
+  await initialize();
+  if (remote()) {
+    return (await pg!.begin(async (sql) =>
+      context.run(
+        async (query, params = []) =>
+          (await sql.unsafe(query, params as never[])) as unknown as Row[],
+        action,
+      ),
+    )) as T;
+  }
+  return exclusive(async () => {
+    sqlite!.exec("BEGIN IMMEDIATE");
+    try {
+      const result = await context.run(execute, action);
+      sqlite!.exec("COMMIT");
+      return result;
+    } catch (error) {
+      sqlite!.exec("ROLLBACK");
+      throw error;
+    }
+  });
 }
 export async function one(sql: string, params: unknown[] = []) {
   return (await db(sql, params))[0];

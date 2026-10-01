@@ -6,6 +6,7 @@ import os
 import queue
 import shutil
 import signal
+import socket
 import subprocess
 import sys
 import threading
@@ -37,6 +38,19 @@ class Client:
         self.opener=urllib.request.build_opener(NoRedirect())
 
     def request(self,path,body=None,lease=None,method=None,file=None):
+        # These writes are idempotent under the current lease. A lease request is
+        # deliberately not replayed: its response could contain a newly claimed job.
+        for attempt in range(3):
+            try:
+                return self._request(path,body,lease,method,file)
+            except urllib.error.HTTPError as exc:
+                if exc.code not in (429,500,502,503,504) or path.endswith('/lease') or attempt==2:
+                    raise
+            except (urllib.error.URLError,TimeoutError,socket.timeout,ConnectionError):
+                if path.endswith('/lease') or attempt==2:raise
+            time.sleep(attempt+1)
+
+    def _request(self,path,body=None,lease=None,method=None,file=None):
         if not path.startswith('/api/worker/'):raise ValueError('Ruta de agente inválida.')
         headers={'Authorization':'Bearer '+self.token}
         if lease:headers['X-Lease-Token']=lease
@@ -55,15 +69,20 @@ class Client:
         headers={'Authorization':'Bearer '+self.token,'X-Lease-Token':job['lease_token']}
         if self.bypass:headers['x-vercel-protection-bypass']=self.bypass
         req=urllib.request.Request(f"{self.url}/api/worker/{job['id']}/assets/{asset['id']}",headers=headers)
+        partial=target.with_name(target.name+'.partial')
         size=0;digest=hashlib.sha256()
-        with self.opener.open(req,timeout=60) as res,target.open('xb') as out:
-            while True:
-                block=res.read(1024*1024)
-                if not block:break
-                size+=len(block)
-                if size>limit:raise ValueError('invalid_media')
-                digest.update(block);out.write(block)
-        if size!=asset['size'] or (asset.get('sha256') and digest.hexdigest()!=asset['sha256']):raise ValueError('invalid_media')
+        try:
+            with self.opener.open(req,timeout=60) as res,partial.open('wb') as out:
+                while True:
+                    block=res.read(1024*1024)
+                    if not block:break
+                    size+=len(block)
+                    if size>limit:raise ValueError('invalid_media')
+                    digest.update(block);out.write(block)
+            if size!=asset['size'] or (asset.get('sha256') and digest.hexdigest()!=asset['sha256']):raise ValueError('invalid_media')
+            partial.replace(target)
+        finally:
+            partial.unlink(missing_ok=True)
 
 
 def stop_tree(process):
@@ -96,7 +115,9 @@ def capabilities():
 
 
 def execute(client,job,state,max_duration=600,timeout=3600):
-    folder=state/f"{job['id']}_{job['attempt']}"
+    # Job settings are immutable. Reuse verified source/transcript/result after a
+    # worker restart instead of repeating ASR and a completed expensive render.
+    folder=state/job['id']
     folder.mkdir(parents=True,exist_ok=True)
     token=job['lease_token'];prefix=f"/api/worker/{job['id']}"
     canceled=threading.Event();lost=threading.Event();done=threading.Event()
@@ -187,11 +208,20 @@ def cleanup(state,days=7):
 
 
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('--config',type=Path);ap.add_argument('--once',action='store_true');args=ap.parse_args()
+    ap=argparse.ArgumentParser();ap.add_argument('--config',type=Path);ap.add_argument('--once',action='store_true');ap.add_argument('--check',action='store_true');args=ap.parse_args()
     config=e.read_json(args.config) if args.config else {}
     client=Client(config.get('url') or os.environ.get('STUDIO_URL','http://127.0.0.1:3000'),config.get('token') or os.environ.get('WORKER_TOKEN',''),config.get('bypass') or os.environ.get('VERCEL_AUTOMATION_BYPASS_SECRET'))
     state=Path(config.get('state_dir') or Path(os.environ.get('LOCALAPPDATA',Path.home()))/'DentFlow/studio-worker').resolve();state.mkdir(parents=True,exist_ok=True)
     worker_id=config.get('worker_id','pc-windows');caps=capabilities()
+    if args.check:
+        try:
+            result=client.request('/api/worker/status')
+            print(json.dumps({'studio':result,'capabilities':caps},ensure_ascii=False))
+            if not result.get('ready') or not all(caps.values()):sys.exit(1)
+        except Exception:
+            print('No se pudo autenticar/conectar el worker. Revisa URL, token y proteccion Vercel; no se mostraron secretos.')
+            sys.exit(1)
+        return
     print('Worker listo. Sondeo saliente; una edición por vez.',flush=True)
     while True:
         try:

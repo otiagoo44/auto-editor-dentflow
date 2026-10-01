@@ -1,0 +1,1400 @@
+{
+  "schema_version": 1,
+  "source_document": "DentFlow_V3_Sistema_Contenido_Organico_EDITABLE(2).docx",
+  "source_date": "2026-09-29",
+  "source_scope": "Documento V3 interno del usuario, NO archivo del repositorio GitHub",
+  "content_system": "DentFlow / Sistema Orgánico V3",
+  "editorial_notice": "18 reels y 3 alternativas; fechas originales son propuestas desplazables. No asumir que videos/funcionalidades están listos. Ningún resultado comercial está probado. Revisión humana antes de publicar.",
+  "demo_gates": {
+    "D1": {
+      "reel": "R03",
+      "title": "Ficha de consulta con estado y próximo paso",
+      "text": "Problema y objetivo  Ficha de consulta con estado y próximo paso; separar función de resultado comercial.\nPreparación / datos  Lead 01, consulta ficticia de ortodoncia, responsable ficticio Alex; pantalla sin notificaciones o información real.\nSecuencia  1) Abrir cuenta demo. 2) Buscar/crear ficha. 3) Editar solo campos disponibles. 4) Volver a lista y reabrir.\nNarración y resultado  Narrar qué dato persiste. Declarar «si no existe campo X, este vídeo será pizarra, no demo». La información persiste en pantalla si pasa gate; tiempo y carga aún no medidos.\nGate y sustitución  [ ] Campos probados [ ] Tarea reproducida [ ] Datos ficticios [ ] Sin promesas. Si falla: concepto etiquetado, o reemplazo de calendario.\nGUION ALTERNATIVO LITERAL SI FALLA EL GATE  «Este es un ejemplo del procedimiento que queremos apoyar: una consulta debe dejar claro qué se habló, quién la retoma y cuándo corresponde revisar. Esto es una pizarra conceptual, no una pantalla funcional ni una integración demostrada. Antes de implementar cualquier sistema habría que probar ese registro en la versión real y medir la carga que agrega al equipo.»"
+    },
+    "D2": {
+      "reel": "R08",
+      "title": "Vista de pendientes por responsable o estado",
+      "text": "Problema y objetivo  Vista de pendientes por responsable o estado; separar función de resultado comercial.\nPreparación / datos  Lead 02/03, responsables ficticios, fechas ficticias; pantalla sin notificaciones o información real.\nSecuencia  1) Acceder a tablero. 2) Mostrar vista realmente activa. 3) Filtrar si hay filtro real. 4) Abrir un caso y comprobar consistencia.\nNarración y resultado  Decir exactamente qué se puede revisar y cuál dato debe mantener el equipo. Si tablero o filtros no existen, utilizar hoja de revisión marcada «concepto».\nGate y sustitución  [ ] Campos probados [ ] Tarea reproducida [ ] Datos ficticios [ ] Sin promesas. Si falla: concepto etiquetado, o reemplazo de calendario.\nGUION ALTERNATIVO LITERAL SI FALLA EL GATE  «Para una revisión de dirección, yo empezaría por compromisos con fecha, tareas sin responsable y casos que necesitan una decisión. Esta planilla ficticia muestra la lógica, no una funcionalidad certificada de DentFlow. Lo siguiente es comprobar si el producto actual presenta esos datos y quién se encarga de mantenerlos.»"
+    },
+    "D3": {
+      "reel": "R11",
+      "title": "Registrar consulta y recuperar registro sin cortes",
+      "text": "Problema y objetivo  Registrar consulta y recuperar registro sin cortes; separar función de resultado comercial.\nPreparación / datos  Lead 04; tratamiento ficticio; ninguna conversación real; pantalla sin notificaciones o información real.\nSecuencia  1) Preparar ambiente demo. 2) Grabar secuencia completa de ingreso. 3) Registrar pasos manuales. 4) Encontrar entrada.\nNarración y resultado  Narrar cada paso, inclusive copia manual si ocurre; cronómetro solo del caso observado. Resultado: tarea completa o error visible; no proyectar tiempos generalizables.\nGate y sustitución  [ ] Campos probados [ ] Tarea reproducida [ ] Datos ficticios [ ] Sin promesas. Si falla: concepto etiquetado, o reemplazo de calendario.\nGUION ALTERNATIVO LITERAL SI FALLA EL GATE  «Para evaluar un CRM no alcanza con mostrar una pantalla linda. Este flujo en papel representa los pasos que deberíamos comprobar con recepción: llega la consulta, se registra su contexto y se encuentra el siguiente paso. Si el producto aún no reproduce esto de principio a fin, corresponde decirlo y resolverlo antes de prometer que facilita el trabajo.»"
+    },
+    "D4": {
+      "reel": "R15",
+      "title": "Revisión semanal con tablero o planilla",
+      "text": "Problema y objetivo  Revisión semanal con tablero o planilla; separar función de resultado comercial.\nPreparación / datos  Tres casos inventados con estado y próximo compromiso; pantalla sin notificaciones o información real.\nSecuencia  1) Comprobar vista de tablero. 2) Si disponible, filtrar tres casos. 3) Asignar acciones si existe función. 4) Si no, usar planilla explícita.\nNarración y resultado  Explicar rutina de equipo, no atribuir software a una hoja simulada. Mostrar tres decisiones, no resultados de negocio.\nGate y sustitución  [ ] Campos probados [ ] Tarea reproducida [ ] Datos ficticios [ ] Sin promesas. Si falla: concepto etiquetado, o reemplazo de calendario.\nGUION ALTERNATIVO LITERAL SI FALLA EL GATE  «Una reunión semanal puede funcionar con una simple planilla. Miramos compromisos próximos, elegimos los casos que requieren responsable y registramos quién hará qué. Esto es un proceso propuesto, no una demostración de una función del producto. Cuando exista una vista operativa real, podremos probar si facilita esta reunión.»"
+    }
+  },
+  "items": [
+    {
+      "code": "R01",
+      "title": "¿Qué pasa después de responder?",
+      "type": "reel",
+      "status": "planned",
+      "fields": {
+        "A": {
+          "label": "IDENTIFICACIÓN",
+          "text": "Semana 1; Lun 05/10/2026; audiencia: Responsable de recepción y administrador de clínica con múltiples consultas. Objetivo: Descubrir si la continuidad posterior a la respuesta importa al segmento. Problema: Una respuesta a tiempo no describe qué sucedió después. Función: Investigación del problema."
+        },
+        "B": {
+          "label": "FUNDAMENTO",
+          "text": "V2 reels 1, 2 y 8; auditoría §6: repetición, por eso se fusionan en una sola prueba  HIPÓTESIS NO VALIDADA: En ciertos establecimientos, el estado posterior a la respuesta no queda accesible a quien dirige."
+        },
+        "C": {
+          "label": "HOOKS",
+          "text": "1) Cuando alguien pregunta por ortodoncia y no agenda, ¿qué pasa con esa consulta?   2) Responder rápido y saber qué quedó pendiente son dos tareas distintas.   3) Imaginá que la clínica contestó veinte mensajes. ¿Puede decir cuáles esperan algo mañana?  Apertura de prueba: 3; hipótesis creativa, no resultado demostrado."
+        },
+        "D": {
+          "label": "GUION LITERAL",
+          "text": "«Responder rápido una consulta está bien. Pero supongamos que alguien pregunta por ortodoncia, recibe los horarios y dice: «te confirmo». ¿Qué pasa después? Algunas clínicas resuelven esto con etiquetas, una planilla o un protocolo claro. Otras dependen de que alguien recuerde abrir el chat. La pregunta no es si necesitás un CRM; es si hoy pueden saber qué quedó abierto y quién lo va a retomar. ¿Cómo lo resuelven ustedes?»"
+        },
+        "E": {
+          "label": "PLAN VISUAL",
+          "text": "0-4 s: a cámara, pregunta sin logo.  4-18 s: chat ficticio «Te confirmo», pantalla dividida con dos procesos posibles.  18-final: pizarra con «estado - responsable - próxima revisión» y pregunta abierta.  Material en pantalla: Dos ramas: «etiqueta y revisión» / «sin procedimiento». Ejemplo simulado visible."
+        },
+        "F": {
+          "label": "EDICIÓN",
+          "text": "Subtitulado máximo dos líneas; corte al presentar la comparación; pausas para que se lean ambas ramas; alto contraste. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares."
+        },
+        "G": {
+          "label": "CTA",
+          "text": "Si trabajás en una clínica, contame si usan etiquetas, planilla u otro método; me interesa conocer procesos reales."
+        },
+        "H": {
+          "label": "CAPTION LISTO",
+          "text": "Contestar no es lo mismo que decidir qué revisar después. Algunas clínicas ya tienen un sistema simple que funciona; otras descubren que dependen de la memoria. ¿Qué método usan en recepción?"
+        },
+        "I": {
+          "label": "DISTRIBUCIÓN",
+          "text": "Orgánico: Instagram Reel nativo; comentario fijado con pregunta abierta sin asumir defecto.   Relaciones: Compartir con odontólogos/administradores que previamente aceptaron intercambiar experiencias; pedir respuesta, no difusión masiva.   Ventas: En una entrevista, preguntar primero por el proceso y usar el reel solamente si el prospecto plantea continuidad.   Seguimiento: Si preguntaron «¿qué sería seguimiento?», enviar solo la parte explicativa y pedir corrección del ejemplo."
+        },
+        "J": {
+          "label": "MEDICIÓN",
+          "text": "Respuestas de clínicas identificables que describan proceso concreto; clasificar «resuelto», «fricción», «desconocido».  Registro: ID reel, clínica confirmada, fuente de contacto, fecha y respuesta textual anonimizada."
+        },
+        "K": {
+          "label": "DECISIÓN",
+          "text": "Mantener si hay descripciones concretas; reescribir si se interpreta como ataque a WhatsApp; probar otra distribución si solo comentan colegas; archivar si no revela una hipótesis nueva tras exposición pertinente.  No usar umbrales de conversión sin base de datos suficiente."
+        }
+      },
+      "raw_sections": [],
+      "week": 1,
+      "script": "«Responder rápido una consulta está bien. Pero supongamos que alguien pregunta por ortodoncia, recibe los horarios y dice: «te confirmo». ¿Qué pasa después? Algunas clínicas resuelven esto con etiquetas, una planilla o un protocolo claro. Otras dependen de que alguien recuerde abrir el chat. La pregunta no es si necesitás un CRM; es si hoy pueden saber qué quedó abierto y quién lo va a retomar. ¿Cómo lo resuelven ustedes?»",
+      "visual_plan": "0-4 s: a cámara, pregunta sin logo.  4-18 s: chat ficticio «Te confirmo», pantalla dividida con dos procesos posibles.  18-final: pizarra con «estado - responsable - próxima revisión» y pregunta abierta.  Material en pantalla: Dos ramas: «etiqueta y revisión» / «sin procedimiento». Ejemplo simulado visible.",
+      "editing_notes": "Subtitulado máximo dos líneas; corte al presentar la comparación; pausas para que se lean ambas ramas; alto contraste. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares.",
+      "caption": "Contestar no es lo mismo que decidir qué revisar después. Algunas clínicas ya tienen un sistema simple que funciona; otras descubren que dependen de la memoria. ¿Qué método usan en recepción?",
+      "cta": "Si trabajás en una clínica, contame si usan etiquetas, planilla u otro método; me interesa conocer procesos reales.",
+      "source_check": {
+        "source": "DentFlow V3 editable original",
+        "not_automatically_verified": true,
+        "demo_requires_D1_D4_review": true,
+        "needs_owner_approval": true
+      }
+    },
+    {
+      "code": "R02",
+      "title": "Revisión de diez consultas sin datos personales",
+      "type": "reel",
+      "status": "planned",
+      "fields": {
+        "A": {
+          "label": "IDENTIFICACIÓN",
+          "text": "Semana 1; Mié 07/10/2026; audiencia: Propietario o administrador con capacidad para decidir procesos. Objetivo: Obtener primeras conversaciones de diagnóstico sin inferir ingresos perdidos. Problema: Falta una evaluación operativa comparable y segura. Función: Recurso práctico / conversación."
+        },
+        "B": {
+          "label": "FUNDAMENTO",
+          "text": "V2 reel 4 y recurso central p.42; auditoría §9: sesgo de seleccionar solo no agendadas  HIPÓTESIS NO VALIDADA: Una revisión agregada puede revelar si la clínica dispone de trazabilidad sin necesidad de software."
+        },
+        "C": {
+          "label": "HOOKS",
+          "text": "1) Una forma de revisar recepción sin mostrar ni un dato de pacientes.   2) Diez registros pueden servir para conversar sobre procesos; no para calcular cuánto dinero se perdió.   3) ¿Tu equipo puede reconstruir qué pasó después de diez consultas elegidas al azar?  Apertura de prueba: 1; hipótesis creativa, no resultado demostrado."
+        },
+        "D": {
+          "label": "GUION LITERAL",
+          "text": "«Te propongo una revisión simple para tu clínica. Elegí diez consultas comerciales de un período definido, sin seleccionar solo las que salieron mal. No me pases nombres, teléfonos, diagnósticos ni chats. En una tabla interna marcá si cada consulta tiene estado, responsable, fecha de revisión y próximo paso cuando corresponde. Después mirá qué casillas cuesta completar. Eso no demuestra pérdida de pacientes ni dinero; sirve para decidir si hace falta mejorar el proceso. Preparé la hoja y las instrucciones. Si la querés, escribime «REVISIÓN».»"
+        },
+        "E": {
+          "label": "PLAN VISUAL",
+          "text": "0-5 s: a cámara con hoja vacía.  5-26 s: pantalla de plantilla ficticia de 10 filas con 4 columnas y «no compartir datos personales».  26-final: vuelve a cámara; destaca límite del método y muestra título del recurso.  Material en pantalla: La plantilla se incorpora íntegra en la sección 8; mostrar solo una captura sintética."
+        },
+        "F": {
+          "label": "EDICIÓN",
+          "text": "Pausar sobre campos; círculo sobre «muestra no representativa si se elige a conveniencia»; subtítulos y texto persistente «sin datos identificables». Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares."
+        },
+        "G": {
+          "label": "CTA",
+          "text": "Escribime REVISIÓN y te paso la hoja. Si querés, después vemos cómo interpretar los resultados."
+        },
+        "H": {
+          "label": "CAPTION LISTO",
+          "text": "No es una calculadora de ingresos perdidos. Es una revisión exploratoria de seguimiento comercial, diseñada para hacerse sin enviarme información de pacientes. La hoja y el procedimiento están disponibles por mensaje."
+        },
+        "I": {
+          "label": "DISTRIBUCIÓN",
+          "text": "Orgánico: Publicar en Instagram y colocar recurso ya preparado en el enlace de perfil solo si está cargado; si no, entrega manual del PDF/hoja de sección 8.   Relaciones: Solicitar a un administrador voluntario que revise si las preguntas son entendibles, sin pedir datos.   Ventas: Usar la hoja como herramienta opcional en descubrimiento; no exigir compartirla para agendar demo.   Seguimiento: Ante solicitud de método, mandar instructivo y preguntar si hubo campos difíciles de reconstruir."
+        },
+        "J": {
+          "label": "MEDICIÓN",
+          "text": "Solicitudes de clínicas verificables + número que realmente completa la revisión + tema detectado; no contabilizar descargas como oportunidades.  Registro: ID reel, clínica confirmada, fuente de contacto, fecha y respuesta textual anonimizada."
+        },
+        "K": {
+          "label": "DECISIÓN",
+          "text": "Mantener si participantes completan el ejercicio; ajustar instrucciones si no entienden muestreo; cambiar canal si las solicitudes son de estudiantes; retirar CTA si aún no existe archivo accesible.  No usar umbrales de conversión sin base de datos suficiente."
+        }
+      },
+      "raw_sections": [],
+      "week": 1,
+      "script": "«Te propongo una revisión simple para tu clínica. Elegí diez consultas comerciales de un período definido, sin seleccionar solo las que salieron mal. No me pases nombres, teléfonos, diagnósticos ni chats. En una tabla interna marcá si cada consulta tiene estado, responsable, fecha de revisión y próximo paso cuando corresponde. Después mirá qué casillas cuesta completar. Eso no demuestra pérdida de pacientes ni dinero; sirve para decidir si hace falta mejorar el proceso. Preparé la hoja y las instrucciones. Si la querés, escribime «REVISIÓN».»",
+      "visual_plan": "0-5 s: a cámara con hoja vacía.  5-26 s: pantalla de plantilla ficticia de 10 filas con 4 columnas y «no compartir datos personales».  26-final: vuelve a cámara; destaca límite del método y muestra título del recurso.  Material en pantalla: La plantilla se incorpora íntegra en la sección 8; mostrar solo una captura sintética.",
+      "editing_notes": "Pausar sobre campos; círculo sobre «muestra no representativa si se elige a conveniencia»; subtítulos y texto persistente «sin datos identificables». Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares.",
+      "caption": "No es una calculadora de ingresos perdidos. Es una revisión exploratoria de seguimiento comercial, diseñada para hacerse sin enviarme información de pacientes. La hoja y el procedimiento están disponibles por mensaje.",
+      "cta": "Escribime REVISIÓN y te paso la hoja. Si querés, después vemos cómo interpretar los resultados.",
+      "source_check": {
+        "source": "DentFlow V3 editable original",
+        "not_automatically_verified": true,
+        "demo_requires_D1_D4_review": true,
+        "needs_owner_approval": true
+      }
+    },
+    {
+      "code": "R03",
+      "title": "De consulta a próximo paso: demo condicionada",
+      "type": "reel",
+      "status": "planned",
+      "fields": {
+        "A": {
+          "label": "IDENTIFICACIÓN",
+          "text": "Semana 1; Vie 09/10/2026; audiencia: Propietario/administrador que pidió ver el sistema. Objetivo: Presentar solo una función del producto realmente observable y anotar dudas. Problema: Es difícil valorar una promesa de organización sin ver el flujo. Función: Producto / soporte a ventas."
+        },
+        "B": {
+          "label": "FUNDAMENTO",
+          "text": "V2 reel 3, p.14; auditoría §7 advierte que demo no equivale a adopción  HIPÓTESIS NO VALIDADA: Una demostración real y limitada permite al comprador distinguir funciones de promesas."
+        },
+        "C": {
+          "label": "HOOKS",
+          "text": "1) Así se organiza una consulta de ejemplo, sin datos de pacientes.   2) No te voy a mostrar un supuesto resultado de ventas: te muestro una acción en pantalla.   3) ¿Qué ve recepción al abrir una consulta que tiene un próximo paso?  Apertura de prueba: 2; hipótesis creativa, no resultado demostrado."
+        },
+        "D": {
+          "label": "GUION LITERAL",
+          "text": "«Esto es una demostración con datos inventados. Primero abro una consulta de ejemplo de ortodoncia. Si estos campos están activos en la versión actual, registro su estado, la persona responsable y el próximo paso con su fecha. Después vuelvo a la lista para ver qué quedó anotado. Eso muestra una manera posible de registrar el trabajo. No demuestra que todas las clínicas lo necesiten ni que el registro sea automático. La pregunta para una demo real es cuántos pasos le agrega o le ahorra a tu equipo.»"
+        },
+        "E": {
+          "label": "PLAN VISUAL",
+          "text": "0-4 s: título «DEMO - datos ficticios».  4-25 s: grabación sin cortes engañosos: crear/abrir Lead 01; completar solamente campos visibles.  25-final: a cámara: «¿cuánto trabajo adicional requiere?» y nota de limitación.  Material en pantalla: Campos mostrados únicamente tras comprobar su existencia en staging. Si falta alguno, sustituir pantalla por pizarra y anunciar «flujo propuesto, no demo»."
+        },
+        "F": {
+          "label": "EDICIÓN",
+          "text": "Cursor visible; zoom óptico legible; no tapar errores ni simular automatización; subtítulos; evitar datos reales. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares."
+        },
+        "G": {
+          "label": "CTA",
+          "text": "Si gestionás consultas y querés ver si este flujo encaja con tu recepción, contame qué herramienta usan hoy."
+        },
+        "H": {
+          "label": "CAPTION LISTO",
+          "text": "Una demo tiene que mostrar acciones reales y también límites. Ejemplo con datos totalmente ficticios. La facilidad de uso se verifica trabajando con una clínica, no mirando una captura."
+        },
+        "I": {
+          "label": "DISTRIBUCIÓN",
+          "text": "Orgánico: Instagram con portada «DEMO REAL O FLUJO PROPUESTO» según gate; archivo vertical maestro para reutilización.   Relaciones: Invitar a un conocido del sector a señalar dónde ve fricción; no pedir testimonio de resultados.   Ventas: Tras descubrir el problema, mostrar únicamente el tramo que responde su pregunta.   Seguimiento: Enviar pantalla breve solo a quien pidió ver registro/próxima acción; preguntar qué paso le parece innecesario."
+        },
+        "J": {
+          "label": "MEDICIÓN",
+          "text": "Número de compradores que identifica con precisión qué función existe y objeciones de doble carga registradas.  Registro: ID reel, clínica confirmada, fuente de contacto, fecha y respuesta textual anonimizada."
+        },
+        "K": {
+          "label": "DECISIÓN",
+          "text": "Si producto no supera el gate, reemplazar por explicación sin marca; si se interpreta como automatización, añadir descargo más visible; si se entiende pero no importa, investigar segmento antes de otra demo.  No usar umbrales de conversión sin base de datos suficiente."
+        }
+      },
+      "raw_sections": [],
+      "week": 1,
+      "script": "«Esto es una demostración con datos inventados. Primero abro una consulta de ejemplo de ortodoncia. Si estos campos están activos en la versión actual, registro su estado, la persona responsable y el próximo paso con su fecha. Después vuelvo a la lista para ver qué quedó anotado. Eso muestra una manera posible de registrar el trabajo. No demuestra que todas las clínicas lo necesiten ni que el registro sea automático. La pregunta para una demo real es cuántos pasos le agrega o le ahorra a tu equipo.»",
+      "visual_plan": "0-4 s: título «DEMO - datos ficticios».  4-25 s: grabación sin cortes engañosos: crear/abrir Lead 01; completar solamente campos visibles.  25-final: a cámara: «¿cuánto trabajo adicional requiere?» y nota de limitación.  Material en pantalla: Campos mostrados únicamente tras comprobar su existencia en staging. Si falta alguno, sustituir pantalla por pizarra y anunciar «flujo propuesto, no demo».",
+      "editing_notes": "Cursor visible; zoom óptico legible; no tapar errores ni simular automatización; subtítulos; evitar datos reales. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares.",
+      "caption": "Una demo tiene que mostrar acciones reales y también límites. Ejemplo con datos totalmente ficticios. La facilidad de uso se verifica trabajando con una clínica, no mirando una captura.",
+      "cta": "Si gestionás consultas y querés ver si este flujo encaja con tu recepción, contame qué herramienta usan hoy.",
+      "source_check": {
+        "source": "DentFlow V3 editable original",
+        "not_automatically_verified": true,
+        "demo_requires_D1_D4_review": true,
+        "needs_owner_approval": true
+      }
+    },
+    {
+      "code": "R04",
+      "title": "El presupuesto que queda sin decisión",
+      "type": "reel",
+      "status": "planned",
+      "fields": {
+        "A": {
+          "label": "IDENTIFICACIÓN",
+          "text": "Semana 2; Lun 12/10/2026; audiencia: Dueño o administrador de clínicas con planes de tratamiento y presupuestos. Objetivo: Comprobar si el seguimiento posterior a un presupuesto es una necesidad diferente. Problema: Presupuestos entregados pueden requerir continuidad comercial específica. Función: Investigación de problema B."
+        },
+        "B": {
+          "label": "FUNDAMENTO",
+          "text": "V2 reel 18; auditoría §6 identifica pregunta diferente de recepción inicial  HIPÓTESIS NO VALIDADA: En un subsegmento, un pendiente de presupuesto importa más que la primera consulta."
+        },
+        "C": {
+          "label": "HOOKS",
+          "text": "1) Después de entregar un presupuesto, ¿quién define el siguiente paso?   2) El seguimiento de una consulta y el de un presupuesto no siempre son el mismo proceso.   3) Una persona recibe su propuesta de tratamiento y pide tiempo para decidir. ¿Qué registra la clínica?  Apertura de prueba: 3; hipótesis creativa, no resultado demostrado."
+        },
+        "D": {
+          "label": "GUION LITERAL",
+          "text": "«Una paciente recibe información sobre un tratamiento y pide unos días para pensarlo. Eso no significa que haya decidido contratar, ni que la clínica deba insistirle. Pero sí conviene saber si quedó pactado algún próximo contacto o si prefiere no recibirlo. Es distinto del primer mensaje que llega a recepción. ¿Ustedes manejan los presupuestos pendientes en la misma agenda, en otro sistema o directamente no hacen seguimiento? Quiero entender qué pasa realmente en las clínicas, no asumir que todas necesitan lo mismo.»"
+        },
+        "E": {
+          "label": "PLAN VISUAL",
+          "text": "0-6 s: escena de presupuesto ficticio sin monto ni diagnóstico.  6-25 s: pizarra con tres opciones: contacto acordado / sin contacto / decisión cerrada.  25-final: pregunta a cámara.  Material en pantalla: Evitar historias clínicas, importes reales y afirmación «se perdió tratamiento»."
+        },
+        "F": {
+          "label": "EDICIÓN",
+          "text": "Cambiar plano al pasar del caso a la clasificación; leer tres opciones en pantalla; subtítulos sin tecnicismos. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares."
+        },
+        "G": {
+          "label": "CTA",
+          "text": "Si sos responsable de una clínica, ¿cómo registran un presupuesto pendiente? Respondeme con el método, sin datos de pacientes."
+        },
+        "H": {
+          "label": "CAPTION LISTO",
+          "text": "Un presupuesto pendiente no es automáticamente una venta perdida. La pregunta es si existe un criterio para saber cuándo corresponde volver a contactar, respetando la decisión de cada persona."
+        },
+        "I": {
+          "label": "DISTRIBUCIÓN",
+          "text": "Orgánico: Instagram; breve historia con encuesta de métodos como indicador exploratorio, no representativo.   Relaciones: Entrevistas con profesional que administre presupuestos, sin inducir una respuesta.   Ventas: Durante llamadas, preguntar separadamente por consultas iniciales y presupuestos.   Seguimiento: Usarlo solo si surgió presupuesto como problema; preguntar si en su clínica hay permiso/protocolo de contacto."
+        },
+        "J": {
+          "label": "MEDICIÓN",
+          "text": "Número de entrevistas donde surge espontáneamente presupuesto como problema priorizado y práctica actual descrita.  Registro: ID reel, clínica confirmada, fuente de contacto, fecha y respuesta textual anonimizada."
+        },
+        "K": {
+          "label": "DECISIÓN",
+          "text": "Mantener como subsegmento si el comprador lo prioriza; modificar si confunde marketing con tratamiento; detener si solo usuarios sin decisión lo mencionan.  No usar umbrales de conversión sin base de datos suficiente."
+        }
+      },
+      "raw_sections": [],
+      "week": 2,
+      "script": "«Una paciente recibe información sobre un tratamiento y pide unos días para pensarlo. Eso no significa que haya decidido contratar, ni que la clínica deba insistirle. Pero sí conviene saber si quedó pactado algún próximo contacto o si prefiere no recibirlo. Es distinto del primer mensaje que llega a recepción. ¿Ustedes manejan los presupuestos pendientes en la misma agenda, en otro sistema o directamente no hacen seguimiento? Quiero entender qué pasa realmente en las clínicas, no asumir que todas necesitan lo mismo.»",
+      "visual_plan": "0-6 s: escena de presupuesto ficticio sin monto ni diagnóstico.  6-25 s: pizarra con tres opciones: contacto acordado / sin contacto / decisión cerrada.  25-final: pregunta a cámara.  Material en pantalla: Evitar historias clínicas, importes reales y afirmación «se perdió tratamiento».",
+      "editing_notes": "Cambiar plano al pasar del caso a la clasificación; leer tres opciones en pantalla; subtítulos sin tecnicismos. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares.",
+      "caption": "Un presupuesto pendiente no es automáticamente una venta perdida. La pregunta es si existe un criterio para saber cuándo corresponde volver a contactar, respetando la decisión de cada persona.",
+      "cta": "Si sos responsable de una clínica, ¿cómo registran un presupuesto pendiente? Respondeme con el método, sin datos de pacientes.",
+      "source_check": {
+        "source": "DentFlow V3 editable original",
+        "not_automatically_verified": true,
+        "demo_requires_D1_D4_review": true,
+        "needs_owner_approval": true
+      }
+    },
+    {
+      "code": "R05",
+      "title": "WhatsApp Business ya organiza: ¿qué falta?",
+      "type": "reel",
+      "status": "planned",
+      "fields": {
+        "A": {
+          "label": "IDENTIFICACIÓN",
+          "text": "Semana 2; Mié 14/10/2026; audiencia: Administrador que utiliza WhatsApp Business y duda de añadir software. Objetivo: Evitar promesas de diferenciación basadas en una comparación falsa. Problema: Etiquetas y respuestas rápidas ya resuelven tareas; la brecha comercial debe demostrarse. Función: Objeción / filtro de encaje."
+        },
+        "B": {
+          "label": "FUNDAMENTO",
+          "text": "Auditoría §7.2 y fuente E4: Meta documenta etiquetas y respuestas rápidas  HIPÓTESIS NO VALIDADA: Algunas clínicas tienen proceso suficiente con herramientas actuales."
+        },
+        "C": {
+          "label": "HOOKS",
+          "text": "1) Si tus etiquetas de WhatsApp funcionan, quizás no necesites otro sistema.   2) Antes de recomendar un CRM, hay que mirar qué resuelve la herramienta actual.   3) Una clínica ordena sus chats por etiquetas. ¿Qué pregunta sigue abierta?  Apertura de prueba: 1; hipótesis creativa, no resultado demostrado."
+        },
+        "D": {
+          "label": "GUION LITERAL",
+          "text": "«Si tu clínica usa bien las etiquetas de WhatsApp Business, ya tiene una herramienta de organización. No tendría sentido que te vendamos otro software para hacer exactamente lo mismo. La pregunta es qué información necesitás además. Por ejemplo, ¿podés revisar responsables y fechas entre turnos sin reconstruir el proceso? Si la respuesta es sí, capaz no hay problema que resolver. Si es no, recién ahí vale la pena comparar opciones. Primero evaluamos el procedimiento; después, las herramientas.»"
+        },
+        "E": {
+          "label": "PLAN VISUAL",
+          "text": "0-5 s: a cámara «quizás no».  5-23 s: dos columnas neutras «lo que ya resolvés / lo que necesitás verificar».  23-final: placa de tres preguntas sobre herramientas actuales.  Material en pantalla: No mostrar logos de competidores sin necesidad. Nota pequeña «WhatsApp Business ofrece etiquetas» [E4]."
+        },
+        "F": {
+          "label": "EDICIÓN",
+          "text": "Cortes en afirmación contraria y preguntas; accesibilidad con columnas etiquetadas, no solo colores. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares."
+        },
+        "G": {
+          "label": "CTA",
+          "text": "Si ya lo tienen resuelto, contame qué método usan. También quiero conocer esos casos."
+        },
+        "H": {
+          "label": "CAPTION LISTO",
+          "text": "Las etiquetas de WhatsApp Business existen y pueden ser suficientes para algunos equipos. Comparar herramientas empieza por identificar la necesidad, no por descalificar lo que funciona."
+        },
+        "I": {
+          "label": "DISTRIBUCIÓN",
+          "text": "Orgánico: Instagram; LinkedIn texto opcional si se identifican administradores reales allí; no publicar sin hipótesis de audiencia.   Relaciones: Preguntar a gestores que ya usan etiquetas qué les funciona y qué no.   Ventas: Enviar solo cuando la objeción real es «ya tenemos etiquetas»; no imponer la comparación.   Seguimiento: En seguimiento, documentar si esa clínica necesita una vista transversal o tiene proceso adecuado."
+        },
+        "J": {
+          "label": "MEDICIÓN",
+          "text": "Ejemplos de funciones actuales que los prospectos usan y brechas específicas corroboradas, no comentarios que digan «buen video».  Registro: ID reel, clínica confirmada, fuente de contacto, fecha y respuesta textual anonimizada."
+        },
+        "K": {
+          "label": "DECISIÓN",
+          "text": "Conservar si reduce malas calificaciones; corregir si minimiza funciones de WhatsApp; dejar de promover software al segmento que ya resuelve las preguntas.  No usar umbrales de conversión sin base de datos suficiente."
+        }
+      },
+      "raw_sections": [],
+      "week": 2,
+      "script": "«Si tu clínica usa bien las etiquetas de WhatsApp Business, ya tiene una herramienta de organización. No tendría sentido que te vendamos otro software para hacer exactamente lo mismo. La pregunta es qué información necesitás además. Por ejemplo, ¿podés revisar responsables y fechas entre turnos sin reconstruir el proceso? Si la respuesta es sí, capaz no hay problema que resolver. Si es no, recién ahí vale la pena comparar opciones. Primero evaluamos el procedimiento; después, las herramientas.»",
+      "visual_plan": "0-5 s: a cámara «quizás no».  5-23 s: dos columnas neutras «lo que ya resolvés / lo que necesitás verificar».  23-final: placa de tres preguntas sobre herramientas actuales.  Material en pantalla: No mostrar logos de competidores sin necesidad. Nota pequeña «WhatsApp Business ofrece etiquetas» [E4].",
+      "editing_notes": "Cortes en afirmación contraria y preguntas; accesibilidad con columnas etiquetadas, no solo colores. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares.",
+      "caption": "Las etiquetas de WhatsApp Business existen y pueden ser suficientes para algunos equipos. Comparar herramientas empieza por identificar la necesidad, no por descalificar lo que funciona.",
+      "cta": "Si ya lo tienen resuelto, contame qué método usan. También quiero conocer esos casos.",
+      "source_check": {
+        "source": "DentFlow V3 editable original",
+        "not_automatically_verified": true,
+        "demo_requires_D1_D4_review": true,
+        "needs_owner_approval": true
+      }
+    },
+    {
+      "code": "R06",
+      "title": "Cuando cambia el turno de recepción",
+      "type": "reel",
+      "status": "planned",
+      "fields": {
+        "A": {
+          "label": "IDENTIFICACIÓN",
+          "text": "Semana 2; Vie 16/10/2026; audiencia: Encargado de recepción y propietario con dos turnos. Objetivo: Verificar si la continuidad entre empleados es un problema prioritario. Problema: El cambio de personal puede exigir reconstruir contexto si no hay proceso. Función: Investigación de adopción."
+        },
+        "B": {
+          "label": "FUNDAMENTO",
+          "text": "V2 reels 9/25/27 fusionados; auditoría §6 evidencia redundancia anterior  HIPÓTESIS NO VALIDADA: Entre clínicas con dos turnos, la continuidad es una necesidad declarada y relevante."
+        },
+        "C": {
+          "label": "HOOKS",
+          "text": "1) La prueba no es cómo trabaja tu mejor recepcionista, sino cómo cambia el turno.   2) ¿Qué recibe la persona que entra a recepción a las dos de la tarde?   3) Una consulta queda pendiente al mediodía. El siguiente turno, ¿qué ve?  Apertura de prueba: 3; hipótesis creativa, no resultado demostrado."
+        },
+        "D": {
+          "label": "GUION LITERAL",
+          "text": "«Imaginá que alguien pregunta por implantes por la mañana y deja pendiente confirmar un horario. A la tarde cambia el turno. En una clínica organizada, la nueva persona ve qué se respondió y si hay algo acordado para hacer. Eso puede funcionar con una nota, etiquetas, una planilla o software. No es una competencia para ver quién usa más tecnología. La cuestión es cuántas veces hay que volver a preguntar o buscar información. ¿Tienen un protocolo claro para ese cambio?»"
+        },
+        "E": {
+          "label": "PLAN VISUAL",
+          "text": "0-4 s: pantalla con reloj 12:50 a 14:00.  4-23 s: dos fichas sintéticas de turno, una con próximo paso y otra incompleta.  23-final: cámara: pregunta de proceso.  Material en pantalla: Ejemplo 100 % ficticio; comparación de transferencias, no pantallas atribuidas a la clínica."
+        },
+        "F": {
+          "label": "EDICIÓN",
+          "text": "Cambiar de plano con reloj; superponer «quién / qué / cuándo»; sin frases que culpabilicen a empleados. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares."
+        },
+        "G": {
+          "label": "CTA",
+          "text": "Preguntá al equipo si el cambio de turno deja alguna tarea ambigua y contame si tienen un protocolo que les funciona."
+        },
+        "H": {
+          "label": "CAPTION LISTO",
+          "text": "La continuidad no depende de una persona perfecta: depende de que el procedimiento pueda repetirse cuando cambia el turno. Distintas herramientas pueden lograrlo."
+        },
+        "I": {
+          "label": "DISTRIBUCIÓN",
+          "text": "Orgánico: Instagram y una historia con pregunta abierta «¿hay dos turnos?» para identificar, no medir prevalencia.   Relaciones: Compartir con responsables conocidos que trabajan con turnos solo con permiso.   Ventas: Si un administrador menciona relevos, enviar el ejemplo y preguntar por protocolo existente.   Seguimiento: No reenviar a toda la lista de prospectos; adjuntar únicamente a oportunidades con objeción sobre continuidad."
+        },
+        "J": {
+          "label": "MEDICIÓN",
+          "text": "Número de clínicas con dos turnos que describen fricción específica y reconocen intención de ajustar proceso.  Registro: ID reel, clínica confirmada, fuente de contacto, fecha y respuesta textual anonimizada."
+        },
+        "K": {
+          "label": "DECISIÓN",
+          "text": "Mantener si hay problemas reportados y disposición a actuar; pivotar a plantilla de cambio de turno si el software es excesivo; despriorizar si el segmento tiene una sola persona por recepción.  No usar umbrales de conversión sin base de datos suficiente."
+        }
+      },
+      "raw_sections": [],
+      "week": 2,
+      "script": "«Imaginá que alguien pregunta por implantes por la mañana y deja pendiente confirmar un horario. A la tarde cambia el turno. En una clínica organizada, la nueva persona ve qué se respondió y si hay algo acordado para hacer. Eso puede funcionar con una nota, etiquetas, una planilla o software. No es una competencia para ver quién usa más tecnología. La cuestión es cuántas veces hay que volver a preguntar o buscar información. ¿Tienen un protocolo claro para ese cambio?»",
+      "visual_plan": "0-4 s: pantalla con reloj 12:50 a 14:00.  4-23 s: dos fichas sintéticas de turno, una con próximo paso y otra incompleta.  23-final: cámara: pregunta de proceso.  Material en pantalla: Ejemplo 100 % ficticio; comparación de transferencias, no pantallas atribuidas a la clínica.",
+      "editing_notes": "Cambiar de plano con reloj; superponer «quién / qué / cuándo»; sin frases que culpabilicen a empleados. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares.",
+      "caption": "La continuidad no depende de una persona perfecta: depende de que el procedimiento pueda repetirse cuando cambia el turno. Distintas herramientas pueden lograrlo.",
+      "cta": "Preguntá al equipo si el cambio de turno deja alguna tarea ambigua y contame si tienen un protocolo que les funciona.",
+      "source_check": {
+        "source": "DentFlow V3 editable original",
+        "not_automatically_verified": true,
+        "demo_requires_D1_D4_review": true,
+        "needs_owner_approval": true
+      }
+    },
+    {
+      "code": "R07",
+      "title": "Agenda y oportunidades responden preguntas distintas",
+      "type": "reel",
+      "status": "planned",
+      "fields": {
+        "A": {
+          "label": "IDENTIFICACIÓN",
+          "text": "Semana 3; Lun 19/10/2026; audiencia: Propietario con sistema de citas existente. Objetivo: Comprobar si el concepto se entiende en dos formatos y si existe necesidad más allá de agenda. Problema: Citas agendadas no incluyen necesariamente consultas sin cita. Función: Educación / objeción."
+        },
+        "B": {
+          "label": "FUNDAMENTO",
+          "text": "V2 reel 15; auditoría §7 advierte no asumir alternativa deficiente  HIPÓTESIS NO VALIDADA: El matiz agenda/seguimiento es comprensible, pero solo importa cuando el comprador reporta una brecha."
+        },
+        "C": {
+          "label": "HOOKS",
+          "text": "1) Tu agenda puede estar perfecta y aun así quedar una pregunta comercial sin respuesta.   2) Antes de contratar otro software, probá hacerle estas dos preguntas a tu agenda.   3) ¿Dónde registran a quien pregunta pero nunca agenda?  Apertura de prueba: 2; hipótesis creativa, no resultado demostrado."
+        },
+        "D": {
+          "label": "GUION LITERAL",
+          "text": "«La agenda te responde quién tiene cita y cuándo. Otra pregunta posible es qué ocurre con quienes consultaron y todavía no reservaron. Hay clínicas que lo resuelven perfectamente con etiquetas o planillas; en otras, esa parte queda dispersa. No se trata de reemplazar una agenda que funciona. Se trata de identificar si existe una pregunta que hoy ninguna herramienta responde con facilidad. Si la respuesta ya está, otro sistema podría sobrar.»"
+        },
+        "E": {
+          "label": "PLAN VISUAL",
+          "text": "0-5 s: a cámara con dos preguntas distintas.  5-22 s: whiteboard «citas confirmadas / consultas aún sin cita».  22-final: recuadro «si ya lo resolvés, no agregues software».  Material en pantalla: Formato A pizarra vertical; probar formato B recorte breve 16:9 solo si hay audiencia y esfuerzo suficiente."
+        },
+        "F": {
+          "label": "EDICIÓN",
+          "text": "Subtitular cada pregunta; cambio a whiteboard como contraste formal con R5; transiciones sobrias. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares."
+        },
+        "G": {
+          "label": "CTA",
+          "text": "¿Con qué herramienta responden hoy la segunda pregunta?"
+        },
+        "H": {
+          "label": "CAPTION LISTO",
+          "text": "Una agenda y un seguimiento comercial pueden cubrir necesidades distintas. También pueden convivir en un sistema que ya tengas. El punto es revisar el proceso antes de sumar herramientas."
+        },
+        "I": {
+          "label": "DISTRIBUCIÓN",
+          "text": "Orgánico: Instagram formato whiteboard; LinkedIn prueba solo en cuentas/contactos de administradores identificados si tienen presencia.   Relaciones: Solicitar feedback de colegas del sector sobre claridad de ambas preguntas.   Ventas: En conversación donde surge «ya tenemos agenda», usar clip en lugar de explicación larga si prospecto lo acepta.   Seguimiento: Preguntar explícitamente qué objeción resolvió y registrar «sin cambio» si no modifica nada."
+        },
+        "J": {
+          "label": "MEDICIÓN",
+          "text": "Interacciones identificables de decisores por canal y proporción descriptiva de quienes diferencian ambas necesidades.  Registro: ID reel, clínica confirmada, fuente de contacto, fecha y respuesta textual anonimizada."
+        },
+        "K": {
+          "label": "DECISIÓN",
+          "text": "Conservar canal que aporte respuestas del segmento; si ninguno llega a compradores, cambiar distribución antes de regrabar; si usuarios no ven brecha, suspender insistencia.  No usar umbrales de conversión sin base de datos suficiente."
+        }
+      },
+      "raw_sections": [],
+      "week": 3,
+      "script": "«La agenda te responde quién tiene cita y cuándo. Otra pregunta posible es qué ocurre con quienes consultaron y todavía no reservaron. Hay clínicas que lo resuelven perfectamente con etiquetas o planillas; en otras, esa parte queda dispersa. No se trata de reemplazar una agenda que funciona. Se trata de identificar si existe una pregunta que hoy ninguna herramienta responde con facilidad. Si la respuesta ya está, otro sistema podría sobrar.»",
+      "visual_plan": "0-5 s: a cámara con dos preguntas distintas.  5-22 s: whiteboard «citas confirmadas / consultas aún sin cita».  22-final: recuadro «si ya lo resolvés, no agregues software».  Material en pantalla: Formato A pizarra vertical; probar formato B recorte breve 16:9 solo si hay audiencia y esfuerzo suficiente.",
+      "editing_notes": "Subtitular cada pregunta; cambio a whiteboard como contraste formal con R5; transiciones sobrias. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares.",
+      "caption": "Una agenda y un seguimiento comercial pueden cubrir necesidades distintas. También pueden convivir en un sistema que ya tengas. El punto es revisar el proceso antes de sumar herramientas.",
+      "cta": "¿Con qué herramienta responden hoy la segunda pregunta?",
+      "source_check": {
+        "source": "DentFlow V3 editable original",
+        "not_automatically_verified": true,
+        "demo_requires_D1_D4_review": true,
+        "needs_owner_approval": true
+      }
+    },
+    {
+      "code": "R08",
+      "title": "El tablero que sí permite revisar",
+      "type": "reel",
+      "status": "planned",
+      "fields": {
+        "A": {
+          "label": "IDENTIFICACIÓN",
+          "text": "Semana 3; Mié 21/10/2026; audiencia: Director o propietario que pregunta por visibilidad gerencial. Objetivo: Probar si una vista consolidada existente aporta claridad a un decisor. Problema: La dirección puede requerir visión agregada sin revisar mensajes sueltos. Función: Producto / prueba de distribución."
+        },
+        "B": {
+          "label": "FUNDAMENTO",
+          "text": "V2 reel 13 y 24; auditoría §7: confirmar funcionalidad y adopción  HIPÓTESIS NO VALIDADA: Una demo de tablero solo ayuda si las variables mostradas responden una decisión concreta."
+        },
+        "C": {
+          "label": "HOOKS",
+          "text": "1) Te muestro qué miraría en una revisión semanal, no un tablero lleno de gráficos.   2) Un gráfico sirve si después sabés qué decisión tomar.   3) ¿Cuáles son las consultas que requieren revisión hoy?  Apertura de prueba: 1; hipótesis creativa, no resultado demostrado."
+        },
+        "D": {
+          "label": "GUION LITERAL",
+          "text": "«Si el tablero actual de DentFlow permite ver pendientes por estado o responsable, esta es la vista que mostraría en una reunión corta. Abro datos ficticios, filtro lo que necesita revisión y elijo un caso para definir quién se ocupa y cuándo. Un tablero no resuelve el seguimiento por sí solo. La clínica tiene que acordar qué registra el equipo y revisar esos datos. Si la función todavía no está activa, lo mostramos como propuesta de flujo, nunca como producto terminado.»"
+        },
+        "E": {
+          "label": "PLAN VISUAL",
+          "text": "0-5 s: cámara pregunta «¿qué decisión tomás?»  5-30 s: grabar filtro real habilitado + seleccionar Lead 03, sin esconder acciones.  30-final: pizarra «dato visible -> responsable -> decisión».  Material en pantalla: Captura autenticada solo de ambiente demo; si no hay filtros disponibles, usar lista estática claramente rotulada «mockup»."
+        },
+        "F": {
+          "label": "EDICIÓN",
+          "text": "Cursor destacado, subtítulos, encuadre de un solo dato clave a la vez; no afirmar automatización. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares."
+        },
+        "G": {
+          "label": "CTA",
+          "text": "Si dirigís una clínica, ¿qué pendiente revisarías primero y por qué?"
+        },
+        "H": {
+          "label": "CAPTION LISTO",
+          "text": "Los tableros pueden ser útiles si conectan una cifra con una tarea. Demo o concepto según las funciones verificadas antes de grabar; todos los registros del video son inventados."
+        },
+        "I": {
+          "label": "DISTRIBUCIÓN",
+          "text": "Orgánico: Test de formato: Instagram reel de pantalla; una versión horizontal opcional en LinkedIn si existe audiencia profesional demostrable.   Relaciones: Invitar a un administrador a criticar qué dato falta en el tablero; sin pedir aval público.   Ventas: Solo enviar a interesado que planteó falta de visibilidad directiva.   Seguimiento: Preguntar «¿qué decisión concreta tomarías con esta pantalla?»; documentar respuestas."
+        },
+        "J": {
+          "label": "MEDICIÓN",
+          "text": "Decisores que describen decisión realizable a partir del tablero y confirman qué dato falta.  Registro: ID reel, clínica confirmada, fuente de contacto, fecha y respuesta textual anonimizada."
+        },
+        "K": {
+          "label": "DECISIÓN",
+          "text": "Si no ven utilidad, cambiar métrica o segmento; si pantalla no está implementada usar alternativa diagramada; despriorizar si se necesita información no registrada.  No usar umbrales de conversión sin base de datos suficiente."
+        }
+      },
+      "raw_sections": [],
+      "week": 3,
+      "script": "«Si el tablero actual de DentFlow permite ver pendientes por estado o responsable, esta es la vista que mostraría en una reunión corta. Abro datos ficticios, filtro lo que necesita revisión y elijo un caso para definir quién se ocupa y cuándo. Un tablero no resuelve el seguimiento por sí solo. La clínica tiene que acordar qué registra el equipo y revisar esos datos. Si la función todavía no está activa, lo mostramos como propuesta de flujo, nunca como producto terminado.»",
+      "visual_plan": "0-5 s: cámara pregunta «¿qué decisión tomás?»  5-30 s: grabar filtro real habilitado + seleccionar Lead 03, sin esconder acciones.  30-final: pizarra «dato visible -> responsable -> decisión».  Material en pantalla: Captura autenticada solo de ambiente demo; si no hay filtros disponibles, usar lista estática claramente rotulada «mockup».",
+      "editing_notes": "Cursor destacado, subtítulos, encuadre de un solo dato clave a la vez; no afirmar automatización. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares.",
+      "caption": "Los tableros pueden ser útiles si conectan una cifra con una tarea. Demo o concepto según las funciones verificadas antes de grabar; todos los registros del video son inventados.",
+      "cta": "Si dirigís una clínica, ¿qué pendiente revisarías primero y por qué?",
+      "source_check": {
+        "source": "DentFlow V3 editable original",
+        "not_automatically_verified": true,
+        "demo_requires_D1_D4_review": true,
+        "needs_owner_approval": true
+      }
+    },
+    {
+      "code": "R09",
+      "title": "Priorizar sin prometer ingresos",
+      "type": "reel",
+      "status": "planned",
+      "fields": {
+        "A": {
+          "label": "IDENTIFICACIÓN",
+          "text": "Semana 3; Vie 23/10/2026; audiencia: Encargado de recepción que recibe consultas de distinta urgencia comercial. Objetivo: Investigar criterios de priorización aceptables y evitar «scoring mágico». Problema: La elección de a quién revisar primero no debe depender de supuestas ventas futuras. Función: Educación / investigación."
+        },
+        "B": {
+          "label": "FUNDAMENTO",
+          "text": "V2 reel 12 y 23; auditoría §6 advierte repetición entre prioridad y próxima acción  HIPÓTESIS NO VALIDADA: Un criterio sencillo acordado por la clínica puede aclarar el trabajo sin clasificar personas por valor subjetivo."
+        },
+        "C": {
+          "label": "HOOKS",
+          "text": "1) Una lista de pendientes no decide por vos qué atender primero.   2) No uses un puntaje de «pacientes valiosos» para inventar prioridad.   3) Tres consultas ficticias, una hora libre: ¿qué acción revisarías?  Apertura de prueba: 3; hipótesis creativa, no resultado demostrado."
+        },
+        "D": {
+          "label": "GUION LITERAL",
+          "text": "«Supongamos que recepción tiene tres tareas: devolver una llamada acordada para hoy, responder una consulta nueva y revisar un presupuesto sin fecha de seguimiento. Yo empezaría por los compromisos asumidos y los plazos reales; después definiría con el equipo las otras prioridades. No existe un puntaje mágico que se pueda copiar a todas las clínicas. Si ya tienen una regla documentada, mejor. Lo que quiero investigar es cómo deciden ustedes cuando se juntan varias tareas.»"
+        },
+        "E": {
+          "label": "PLAN VISUAL",
+          "text": "0-6 s: tarjetas ficticias A/B/C.  6-28 s: reordenar tarjetas manualmente y señalar criterio «compromiso acordado».  28-final: mostrar que el orden es ejemplo, pedir reglas reales.  Material en pantalla: Tarjetas de tareas y tiempos pactados; no inferir valor monetario ni necesidad clínica."
+        },
+        "F": {
+          "label": "EDICIÓN",
+          "text": "Cortes al mover tarjetas, subtítulos legibles y aviso «solo ejemplo operativo, no consejo clínico». Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares."
+        },
+        "G": {
+          "label": "CTA",
+          "text": "¿Qué regla utiliza tu recepción cuando tiene varias tareas pendientes?"
+        },
+        "H": {
+          "label": "CAPTION LISTO",
+          "text": "La prioridad operativa puede basarse en compromisos y fechas, no en predicciones de ingresos. Compartí cómo lo hacen si gestionás la recepción de una clínica."
+        },
+        "I": {
+          "label": "DISTRIBUCIÓN",
+          "text": "Orgánico: Instagram; comparar respuestas a formato tarjetas vs whiteboard de R7; no concluir con pocas interacciones.   Relaciones: Entrevistas con responsables operativos que describan reglas reales.   Ventas: Útil si surgen dudas de priorización; no convertirlo en argumento del producto sin validar función.   Seguimiento: Si un prospecto pide un sistema de prioridades, documentar sus reglas antes de enviar cualquier demo."
+        },
+        "J": {
+          "label": "MEDICIÓN",
+          "text": "Reglas operativas aportadas por recepción con ejemplos, sin tratar «likes» como validación.  Registro: ID reel, clínica confirmada, fuente de contacto, fecha y respuesta textual anonimizada."
+        },
+        "K": {
+          "label": "DECISIÓN",
+          "text": "Crear material de procedimiento si hay consenso entre equipos comparables; no programar scoring automático por una opinión aislada; archivar si el problema no importa a compradores.  No usar umbrales de conversión sin base de datos suficiente."
+        }
+      },
+      "raw_sections": [],
+      "week": 3,
+      "script": "«Supongamos que recepción tiene tres tareas: devolver una llamada acordada para hoy, responder una consulta nueva y revisar un presupuesto sin fecha de seguimiento. Yo empezaría por los compromisos asumidos y los plazos reales; después definiría con el equipo las otras prioridades. No existe un puntaje mágico que se pueda copiar a todas las clínicas. Si ya tienen una regla documentada, mejor. Lo que quiero investigar es cómo deciden ustedes cuando se juntan varias tareas.»",
+      "visual_plan": "0-6 s: tarjetas ficticias A/B/C.  6-28 s: reordenar tarjetas manualmente y señalar criterio «compromiso acordado».  28-final: mostrar que el orden es ejemplo, pedir reglas reales.  Material en pantalla: Tarjetas de tareas y tiempos pactados; no inferir valor monetario ni necesidad clínica.",
+      "editing_notes": "Cortes al mover tarjetas, subtítulos legibles y aviso «solo ejemplo operativo, no consejo clínico». Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares.",
+      "caption": "La prioridad operativa puede basarse en compromisos y fechas, no en predicciones de ingresos. Compartí cómo lo hacen si gestionás la recepción de una clínica.",
+      "cta": "¿Qué regla utiliza tu recepción cuando tiene varias tareas pendientes?",
+      "source_check": {
+        "source": "DentFlow V3 editable original",
+        "not_automatically_verified": true,
+        "demo_requires_D1_D4_review": true,
+        "needs_owner_approval": true
+      }
+    },
+    {
+      "code": "R10",
+      "title": "La pregunta incómoda: ¿quién carga los datos?",
+      "type": "reel",
+      "status": "planned",
+      "fields": {
+        "A": {
+          "label": "IDENTIFICACIÓN",
+          "text": "Semana 4; Lun 26/10/2026; audiencia: Administrador y recepción evaluando cambio tecnológico. Objetivo: Identificar esfuerzo real de adopción y el riesgo de doble trabajo. Problema: Una herramienta nueva puede duplicar registro y terminar abandonada. Función: Objeción / entrevista."
+        },
+        "B": {
+          "label": "FUNDAMENTO",
+          "text": "Auditoría §7.1: mayor duda sobre implementación que la V2 no resolvió  HIPÓTESIS NO VALIDADA: La disposición a comprar depende también de quién mantiene datos y cuántos pasos agrega."
+        },
+        "C": {
+          "label": "HOOKS",
+          "text": "1) ¿Quién va a actualizar el CRM el martes a las once?   2) Un sistema ordenado en la demo puede ser trabajo extra en recepción.   3) Si la consulta llega por WhatsApp, ¿qué datos hay que copiar después?  Apertura de prueba: 2; hipótesis creativa, no resultado demostrado."
+        },
+        "D": {
+          "label": "GUION LITERAL",
+          "text": "«Hay una pregunta que cualquier clínica debería hacer antes de contratar un CRM: ¿quién va a mantener la información? Si las consultas llegan por WhatsApp y después alguien tiene que volver a cargar todo manualmente, el sistema puede agregar trabajo. Por eso, antes de prometer eficiencia, hay que revisar tres cosas: qué entra solo, qué se carga a mano y quién se encarga de actualizarlo. En DentFlow esas respuestas tienen que demostrarse con el producto actual y con una prueba de uso, no con una animación.»"
+        },
+        "E": {
+          "label": "PLAN VISUAL",
+          "text": "0-4 s: cámara directa con objeción.  4-25 s: flujo dibujado mensaje -> carga -> revisión; marcar cada paso como automático/manual/no verificado.  25-final: checklist de adopción.  Material en pantalla: No incluir logos de WhatsApp o producto si no se capturan funciones reales; usar símbolos genéricos."
+        },
+        "F": {
+          "label": "EDICIÓN",
+          "text": "Corte de plano por cada pregunta, subtítulos; resaltar «no verificado» sin ocultarlo. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares."
+        },
+        "G": {
+          "label": "CTA",
+          "text": "Antes de una demo, preguntá cuántos pasos tendría que hacer tu recepción para mantener el sistema."
+        },
+        "H": {
+          "label": "CAPTION LISTO",
+          "text": "Una demostración solo muestra el flujo ideal. La decisión necesita contemplar el trabajo cotidiano. Tres preguntas: qué entra automáticamente, qué se registra a mano y quién mantiene los datos."
+        },
+        "I": {
+          "label": "DISTRIBUCIÓN",
+          "text": "Orgánico: Instagram; historia en formato encuesta de objeciones abierta sin sesgo de «¿no te molesta cargar?».   Relaciones: Entrevista operativa con encargados de dos herramientas distintas.   Ventas: Enviar a prospecto que manifestó sobrecarga y proponer prueba con una sola tarea ficticia.   Seguimiento: Registrar minutos de prueba sin extrapolar a toda la operación."
+        },
+        "J": {
+          "label": "MEDICIÓN",
+          "text": "Objeciones concretas de implementación, tareas que duplicaría y número de pasos observados en prueba.  Registro: ID reel, clínica confirmada, fuente de contacto, fecha y respuesta textual anonimizada."
+        },
+        "K": {
+          "label": "DECISIÓN",
+          "text": "Si la carga es inviable en prueba, mejorar el producto o redirigir segmento antes de invertir en videos de beneficios; conservar si permite descartar expectativas falsas.  No usar umbrales de conversión sin base de datos suficiente."
+        }
+      },
+      "raw_sections": [],
+      "week": 4,
+      "script": "«Hay una pregunta que cualquier clínica debería hacer antes de contratar un CRM: ¿quién va a mantener la información? Si las consultas llegan por WhatsApp y después alguien tiene que volver a cargar todo manualmente, el sistema puede agregar trabajo. Por eso, antes de prometer eficiencia, hay que revisar tres cosas: qué entra solo, qué se carga a mano y quién se encarga de actualizarlo. En DentFlow esas respuestas tienen que demostrarse con el producto actual y con una prueba de uso, no con una animación.»",
+      "visual_plan": "0-4 s: cámara directa con objeción.  4-25 s: flujo dibujado mensaje -> carga -> revisión; marcar cada paso como automático/manual/no verificado.  25-final: checklist de adopción.  Material en pantalla: No incluir logos de WhatsApp o producto si no se capturan funciones reales; usar símbolos genéricos.",
+      "editing_notes": "Corte de plano por cada pregunta, subtítulos; resaltar «no verificado» sin ocultarlo. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares.",
+      "caption": "Una demostración solo muestra el flujo ideal. La decisión necesita contemplar el trabajo cotidiano. Tres preguntas: qué entra automáticamente, qué se registra a mano y quién mantiene los datos.",
+      "cta": "Antes de una demo, preguntá cuántos pasos tendría que hacer tu recepción para mantener el sistema.",
+      "source_check": {
+        "source": "DentFlow V3 editable original",
+        "not_automatically_verified": true,
+        "demo_requires_D1_D4_review": true,
+        "needs_owner_approval": true
+      }
+    },
+    {
+      "code": "R11",
+      "title": "Una consulta ficticia, de principio a fin",
+      "type": "reel",
+      "status": "planned",
+      "fields": {
+        "A": {
+          "label": "IDENTIFICACIÓN",
+          "text": "Semana 4; Mié 28/10/2026; audiencia: Recepcionista que usaría el producto y administrador. Objetivo: Mostrar secuencia real con cronómetro de prueba y recoger dificultades. Problema: La secuencia real puede contradecir el flujo presentado. Función: Producto / adopción."
+        },
+        "B": {
+          "label": "FUNDAMENTO",
+          "text": "Auditoría §7.1; V2 reel 19 propone ingreso de formulario sin validación de integración  HIPÓTESIS NO VALIDADA: Una grabación transparente de operaciones permite detectar fricción."
+        },
+        "C": {
+          "label": "HOOKS",
+          "text": "1) Una demo sin cortes: ¿cuántos pasos tiene registrar una consulta?   2) En vez de prometer automatizaciones, hagamos una tarea concreta.   3) Esto es lo que tendría que hacer recepción con un caso inventado.  Apertura de prueba: 2; hipótesis creativa, no resultado demostrado."
+        },
+        "D": {
+          "label": "GUION LITERAL",
+          "text": "«Voy a hacer una prueba sin cortes con un caso inventado. Abro la versión actual y registro una consulta como lo haría recepción: tratamiento de interés, estado y próximo paso, siempre que esos campos estén realmente disponibles. Después vuelvo a encontrarla. Si alguna información hay que copiarla manualmente, se ve. Si algo todavía no funciona, también lo digo. El objetivo de esta demo no es afirmar que el sistema ahorra tiempo: es mostrar el procedimiento para que una clínica decida si quiere probarlo con su equipo.»"
+        },
+        "E": {
+          "label": "PLAN VISUAL",
+          "text": "0-5 s: cámara anuncia «sin cortes engañosos».  5-38 s: captura continua de creación / búsqueda real de Lead 04.  38-final: cuadro «pasos observados / tareas pendientes de verificación».  Material en pantalla: Pantalla demo real previa comprobación; si falla el gate, grabar procedimiento manual genérico sin llamarlo producto."
+        },
+        "F": {
+          "label": "EDICIÓN",
+          "text": "No acelerar pasos de ejecución; zoom a acción relevante, cronómetro sobreimpreso de grabación real, subtítulos completos. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares."
+        },
+        "G": {
+          "label": "CTA",
+          "text": "Si querés evaluar el esfuerzo, describime tu proceso y armamos una prueba limitada sin datos personales."
+        },
+        "H": {
+          "label": "CAPTION LISTO",
+          "text": "Registrar una consulta con una interfaz no prueba reducción de carga. Esta grabación busca hacer visible el flujo, incluso cuando hay pasos manuales o limitaciones."
+        },
+        "I": {
+          "label": "DISTRIBUCIÓN",
+          "text": "Orgánico: Instagram y publicación fijada provisional si cumple gate; sin falsa afirmación «100% integrado».   Relaciones: Pedir crítica de usuario operativo voluntario en privado.   Ventas: En llamada, mostrar vídeo solo después de entender herramienta actual; luego ofrecer prueba acotada.   Seguimiento: Registrar objeciones surgidas tras ver cada paso."
+        },
+        "J": {
+          "label": "MEDICIÓN",
+          "text": "Dificultades específicas reportadas por operativos y completitud real del flujo; tiempo observado solo en este caso ficticio.  Registro: ID reel, clínica confirmada, fuente de contacto, fecha y respuesta textual anonimizada."
+        },
+        "K": {
+          "label": "DECISIÓN",
+          "text": "Pausar difusión si producto falla gate; ajustar onboarding si hay confusión; no proyectar ahorro a partir de una prueba aislada.  No usar umbrales de conversión sin base de datos suficiente."
+        }
+      },
+      "raw_sections": [],
+      "week": 4,
+      "script": "«Voy a hacer una prueba sin cortes con un caso inventado. Abro la versión actual y registro una consulta como lo haría recepción: tratamiento de interés, estado y próximo paso, siempre que esos campos estén realmente disponibles. Después vuelvo a encontrarla. Si alguna información hay que copiarla manualmente, se ve. Si algo todavía no funciona, también lo digo. El objetivo de esta demo no es afirmar que el sistema ahorra tiempo: es mostrar el procedimiento para que una clínica decida si quiere probarlo con su equipo.»",
+      "visual_plan": "0-5 s: cámara anuncia «sin cortes engañosos».  5-38 s: captura continua de creación / búsqueda real de Lead 04.  38-final: cuadro «pasos observados / tareas pendientes de verificación».  Material en pantalla: Pantalla demo real previa comprobación; si falla el gate, grabar procedimiento manual genérico sin llamarlo producto.",
+      "editing_notes": "No acelerar pasos de ejecución; zoom a acción relevante, cronómetro sobreimpreso de grabación real, subtítulos completos. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares.",
+      "caption": "Registrar una consulta con una interfaz no prueba reducción de carga. Esta grabación busca hacer visible el flujo, incluso cuando hay pasos manuales o limitaciones.",
+      "cta": "Si querés evaluar el esfuerzo, describime tu proceso y armamos una prueba limitada sin datos personales.",
+      "source_check": {
+        "source": "DentFlow V3 editable original",
+        "not_automatically_verified": true,
+        "demo_requires_D1_D4_review": true,
+        "needs_owner_approval": true
+      }
+    },
+    {
+      "code": "R12",
+      "title": "Qué hacer después de una ausencia, sin perseguir",
+      "type": "reel",
+      "status": "planned",
+      "fields": {
+        "A": {
+          "label": "IDENTIFICACIÓN",
+          "text": "Semana 4; Vie 30/10/2026; audiencia: Administrador o responsable de confirmaciones. Objetivo: Distinguir ausencia a cita de oportunidad comercial y evaluar pertinencia. Problema: El no-show involucra decisiones de contacto y cuidado del vínculo. Función: Educación / filtro."
+        },
+        "B": {
+          "label": "FUNDAMENTO",
+          "text": "V2 reel 14; auditoría §6 diferencia ejemplo plausible de frecuencia no demostrada  HIPÓTESIS NO VALIDADA: Algunas clínicas necesitan un protocolo de ausencia que no exige CRM."
+        },
+        "C": {
+          "label": "HOOKS",
+          "text": "1) Una ausencia no es una invitación a mandar cinco mensajes.   2) Después de una cita perdida, la primera decisión no es automatizar.   3) El paciente no vino. ¿Cuál es el siguiente paso que sí corresponde?  Apertura de prueba: 1; hipótesis creativa, no resultado demostrado."
+        },
+        "D": {
+          "label": "GUION LITERAL",
+          "text": "«Cuando alguien no asiste a una cita, lo primero no debería ser perseguirlo con mensajes automáticos. La clínica puede revisar si hubo una instrucción previa, qué canal autorizó la persona y si corresponde ofrecer una nueva fecha. Después conviene registrar el resultado para que dos empleados no insistan por separado. Quizás tu agenda ya haga todo esto. Si funciona, perfecto. Si no, el problema que habría que resolver es el protocolo, no simplemente sumar otro recordatorio.»"
+        },
+        "E": {
+          "label": "PLAN VISUAL",
+          "text": "0-5 s: texto «ausencia no es venta perdida».  5-25 s: árbol de decisión ficticio «¿corresponde contactar? / ¿hay permiso? / registrar respuesta».  25-final: a cámara «¿ya lo resuelve tu agenda?».  Material en pantalla: Árbol con ejemplo general; no mostrar historia clínica ni dramatizar pacientes."
+        },
+        "F": {
+          "label": "EDICIÓN",
+          "text": "Subtítulos y ritmo moderado; flechas etiquetadas; evitar sonidos de alarma. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares."
+        },
+        "G": {
+          "label": "CTA",
+          "text": "Revisá si tu equipo tiene un criterio claro para las ausencias; contame si tu agenda ya lo cubre."
+        },
+        "H": {
+          "label": "CAPTION LISTO",
+          "text": "La continuidad también implica saber cuándo NO insistir. Un protocolo breve y respetuoso puede ser suficiente, con o sin otro software."
+        },
+        "I": {
+          "label": "DISTRIBUCIÓN",
+          "text": "Orgánico: Instagram; no incentivar comentarios con situaciones reconocibles de pacientes.   Relaciones: Consultas con administradores sobre procedimientos generales sin datos.   Ventas: Usar si el prospecto plantea ausencias, no como argumento universal.   Seguimiento: Enviar árbol simple antes de hablar de CRM para observar si ya está resuelto."
+        },
+        "J": {
+          "label": "MEDICIÓN",
+          "text": "Equipos que describen protocolo inexistente y priorizan corregirlo; pedidos de recurso operativo.  Registro: ID reel, clínica confirmada, fuente de contacto, fecha y respuesta textual anonimizada."
+        },
+        "K": {
+          "label": "DECISIÓN",
+          "text": "Mantener como educación si aporta criterio; no invertir en feature de mensajes automáticos por respuestas sociales; archivar para venta si todos tienen agenda suficiente.  No usar umbrales de conversión sin base de datos suficiente."
+        }
+      },
+      "raw_sections": [],
+      "week": 4,
+      "script": "«Cuando alguien no asiste a una cita, lo primero no debería ser perseguirlo con mensajes automáticos. La clínica puede revisar si hubo una instrucción previa, qué canal autorizó la persona y si corresponde ofrecer una nueva fecha. Después conviene registrar el resultado para que dos empleados no insistan por separado. Quizás tu agenda ya haga todo esto. Si funciona, perfecto. Si no, el problema que habría que resolver es el protocolo, no simplemente sumar otro recordatorio.»",
+      "visual_plan": "0-5 s: texto «ausencia no es venta perdida».  5-25 s: árbol de decisión ficticio «¿corresponde contactar? / ¿hay permiso? / registrar respuesta».  25-final: a cámara «¿ya lo resuelve tu agenda?».  Material en pantalla: Árbol con ejemplo general; no mostrar historia clínica ni dramatizar pacientes.",
+      "editing_notes": "Subtítulos y ritmo moderado; flechas etiquetadas; evitar sonidos de alarma. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares.",
+      "caption": "La continuidad también implica saber cuándo NO insistir. Un protocolo breve y respetuoso puede ser suficiente, con o sin otro software.",
+      "cta": "Revisá si tu equipo tiene un criterio claro para las ausencias; contame si tu agenda ya lo cubre.",
+      "source_check": {
+        "source": "DentFlow V3 editable original",
+        "not_automatically_verified": true,
+        "demo_requires_D1_D4_review": true,
+        "needs_owner_approval": true
+      }
+    },
+    {
+      "code": "R13",
+      "title": "Una clínica que no necesita otro CRM",
+      "type": "reel",
+      "status": "planned",
+      "fields": {
+        "A": {
+          "label": "IDENTIFICACIÓN",
+          "text": "Semana 5; Lun 02/11/2026; audiencia: Propietario con una operación pequeña y organizada. Objetivo: Filtrar prospectos no adecuados y observar características de encaje. Problema: Comprar software adicional sin necesidad puede empeorar operación. Función: Calificación / confianza."
+        },
+        "B": {
+          "label": "FUNDAMENTO",
+          "text": "V2 reel 29; auditoría §6 destaca posibilidad de segmentar sin inflar mercado  HIPÓTESIS NO VALIDADA: Las señales de no-encaje son explicables y comercialmente relevantes."
+        },
+        "C": {
+          "label": "HOOKS",
+          "text": "1) Hay clínicas a las que no les vendería DentFlow.   2) Si tu planilla funciona y nadie pierde el hilo, no cambies por cambiar.   3) Antes de comprar software, respondé estas tres preguntas.  Apertura de prueba: 3; hipótesis creativa, no resultado demostrado."
+        },
+        "D": {
+          "label": "GUION LITERAL",
+          "text": "«Antes de sumar un CRM, hacete tres preguntas. Primera: ¿pueden identificar sin dificultad qué consultas siguen abiertas? Segunda: ¿alguien se hace cargo del siguiente paso? Tercera: ¿cuando cambia una persona, el equipo mantiene el contexto? Si resolvés todo eso con tu sistema actual, quizás no necesitás DentFlow. Si alguna respuesta es incierta y eso causa trabajo o errores que te importan, recién ahí vale la pena mirar alternativas. Comprar una herramienta no debería ser el punto de partida.»"
+        },
+        "E": {
+          "label": "PLAN VISUAL",
+          "text": "0-5 s: cámara «no para todas».  5-27 s: tres preguntas con respuestas SI / NO / NO SÉ.  27-final: conclusión neutral sin CTA agresivo.  Material en pantalla: Checklist neutra; evitar fake screenshots de clínicas."
+        },
+        "F": {
+          "label": "EDICIÓN",
+          "text": "Cada pregunta en pantalla con pausa real; accesibilidad texto alto contraste. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares."
+        },
+        "G": {
+          "label": "CTA",
+          "text": "Si ya lo resolvés, compartí el método; nos sirve entender qué procesos funcionan sin agregar software."
+        },
+        "H": {
+          "label": "CAPTION LISTO",
+          "text": "No todas las clínicas necesitan otro software. Primero el proceso; después la tecnología. Si tenés claras las respuestas, probablemente no haya urgencia de cambiar."
+        },
+        "I": {
+          "label": "DISTRIBUCIÓN",
+          "text": "Orgánico: Instagram; publicación de perfil para filtrar curiosos de cuentas no relacionadas.   Relaciones: Compartir a propietarios con operación simple como intercambio de criterios, sin oferta.   Ventas: Pedir al prospecto que responda preguntas antes de ofrecer demo; aceptar no-encaje.   Seguimiento: Si se descarta, anotar causa sin presionar ni insistir."
+        },
+        "J": {
+          "label": "MEDICIÓN",
+          "text": "Porcentaje descriptivo de conversaciones que terminan en «no encaja» con razón concreta; no tratarlo como fracaso.  Registro: ID reel, clínica confirmada, fuente de contacto, fecha y respuesta textual anonimizada."
+        },
+        "K": {
+          "label": "DECISIÓN",
+          "text": "Ajustar definición de ICP con casos reales; si la mayoría resuelve el problema, revisar mercado antes de otro mes de contenido.  No usar umbrales de conversión sin base de datos suficiente."
+        }
+      },
+      "raw_sections": [],
+      "week": 5,
+      "script": "«Antes de sumar un CRM, hacete tres preguntas. Primera: ¿pueden identificar sin dificultad qué consultas siguen abiertas? Segunda: ¿alguien se hace cargo del siguiente paso? Tercera: ¿cuando cambia una persona, el equipo mantiene el contexto? Si resolvés todo eso con tu sistema actual, quizás no necesitás DentFlow. Si alguna respuesta es incierta y eso causa trabajo o errores que te importan, recién ahí vale la pena mirar alternativas. Comprar una herramienta no debería ser el punto de partida.»",
+      "visual_plan": "0-5 s: cámara «no para todas».  5-27 s: tres preguntas con respuestas SI / NO / NO SÉ.  27-final: conclusión neutral sin CTA agresivo.  Material en pantalla: Checklist neutra; evitar fake screenshots de clínicas.",
+      "editing_notes": "Cada pregunta en pantalla con pausa real; accesibilidad texto alto contraste. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares.",
+      "caption": "No todas las clínicas necesitan otro software. Primero el proceso; después la tecnología. Si tenés claras las respuestas, probablemente no haya urgencia de cambiar.",
+      "cta": "Si ya lo resolvés, compartí el método; nos sirve entender qué procesos funcionan sin agregar software.",
+      "source_check": {
+        "source": "DentFlow V3 editable original",
+        "not_automatically_verified": true,
+        "demo_requires_D1_D4_review": true,
+        "needs_owner_approval": true
+      }
+    },
+    {
+      "code": "R14",
+      "title": "Cómo comparar tu herramienta actual con DentFlow",
+      "type": "reel",
+      "status": "planned",
+      "fields": {
+        "A": {
+          "label": "IDENTIFICACIÓN",
+          "text": "Semana 5; Mié 04/11/2026; audiencia: Decisor que ya usa software dental. Objetivo: Abrir una comparación comprobable de criterios sin afirmar superioridad. Problema: Otros sistemas combinan agenda, presupuestos, historial y permisos. Función: Objeción / diferenciación."
+        },
+        "B": {
+          "label": "FUNDAMENTO",
+          "text": "Auditoría §7.3; investigación E3: DentaFlow PY declara agenda, presupuestos y facturación  HIPÓTESIS NO VALIDADA: La decisión depende de brechas verificadas y costos reales de cambio."
+        },
+        "C": {
+          "label": "HOOKS",
+          "text": "1) Si ya pagás un software dental, ¿qué resolvería agregar otro?   2) Un sistema completo y un CRM específico no se comparan por la cantidad de botones.   3) Antes de mostrarte DentFlow, pediría una lista de lo que tu sistema ya hace.  Apertura de prueba: 1; hipótesis creativa, no resultado demostrado."
+        },
+        "D": {
+          "label": "GUION LITERAL",
+          "text": "«Si tu clínica ya utiliza software dental, no tiene sentido comparar solamente quién tiene más funciones. Algunos sistemas ya incluyen agenda, presupuestos, historia clínica y reportes. Para evaluar DentFlow habría que identificar una tarea concreta que tu herramienta actual no resuelve de manera satisfactoria, comprobar que nosotros sí podemos hacerla y calcular el trabajo de mantener dos sistemas. Si no existe esa diferencia, no recomiendo duplicar herramientas. Esa conversación es más útil que una presentación genérica.»"
+        },
+        "E": {
+          "label": "PLAN VISUAL",
+          "text": "0-5 s: cámara con pregunta de comparación.  5-27 s: matriz vacía «necesidad / actual / DentFlow verificado / costo de doble registro».  27-final: texto «no comparaciones inventadas».  Material en pantalla: Una matriz sin nombres salvo fuente pública verificada; no logos externos."
+        },
+        "F": {
+          "label": "EDICIÓN",
+          "text": "Subtitular celdas; cambio de plano al introducir costo operativo; sin ranking de proveedores. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares."
+        },
+        "G": {
+          "label": "CTA",
+          "text": "Si querés evaluar tu proceso, prepará una lista de tres tareas que tu sistema actual no resuelve bien."
+        },
+        "H": {
+          "label": "CAPTION LISTO",
+          "text": "La comparación válida se hace por necesidades verificadas y carga de implementación, no por promesas genéricas. DentFlow todavía está en validación y necesita pasar la misma prueba."
+        },
+        "I": {
+          "label": "DISTRIBUCIÓN",
+          "text": "Orgánico: Instagram; enviar la matriz en formato imagen solo a quienes ya usan sistemas.   Relaciones: Solicitar revisión de un gestor que utiliza alternativa para identificar omisiones.   Ventas: Usar durante discovery con cliente equipado; abstenerse de afirmar funciones ajenas no verificadas.   Seguimiento: Pedir ejemplos específicos y demostrar SOLO el área con brecha."
+        },
+        "J": {
+          "label": "MEDICIÓN",
+          "text": "Número de comparaciones completadas que identifican brecha real y función verificada frente a costo plausible.  Registro: ID reel, clínica confirmada, fuente de contacto, fecha y respuesta textual anonimizada."
+        },
+        "K": {
+          "label": "DECISIÓN",
+          "text": "Si no aparecen brechas, pasar a otro subsegmento; si aparecen pero DentFlow no las cubre, registrar roadmap sin prometer fecha; corregir claims si las alternativas sí ofrecen función.  No usar umbrales de conversión sin base de datos suficiente."
+        }
+      },
+      "raw_sections": [],
+      "week": 5,
+      "script": "«Si tu clínica ya utiliza software dental, no tiene sentido comparar solamente quién tiene más funciones. Algunos sistemas ya incluyen agenda, presupuestos, historia clínica y reportes. Para evaluar DentFlow habría que identificar una tarea concreta que tu herramienta actual no resuelve de manera satisfactoria, comprobar que nosotros sí podemos hacerla y calcular el trabajo de mantener dos sistemas. Si no existe esa diferencia, no recomiendo duplicar herramientas. Esa conversación es más útil que una presentación genérica.»",
+      "visual_plan": "0-5 s: cámara con pregunta de comparación.  5-27 s: matriz vacía «necesidad / actual / DentFlow verificado / costo de doble registro».  27-final: texto «no comparaciones inventadas».  Material en pantalla: Una matriz sin nombres salvo fuente pública verificada; no logos externos.",
+      "editing_notes": "Subtitular celdas; cambio de plano al introducir costo operativo; sin ranking de proveedores. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares.",
+      "caption": "La comparación válida se hace por necesidades verificadas y carga de implementación, no por promesas genéricas. DentFlow todavía está en validación y necesita pasar la misma prueba.",
+      "cta": "Si querés evaluar tu proceso, prepará una lista de tres tareas que tu sistema actual no resuelve bien.",
+      "source_check": {
+        "source": "DentFlow V3 editable original",
+        "not_automatically_verified": true,
+        "demo_requires_D1_D4_review": true,
+        "needs_owner_approval": true
+      }
+    },
+    {
+      "code": "R15",
+      "title": "Reunión de diez minutos sobre pendientes",
+      "type": "reel",
+      "status": "planned",
+      "fields": {
+        "A": {
+          "label": "IDENTIFICACIÓN",
+          "text": "Semana 5; Vie 06/11/2026; audiencia: Director con varios responsables. Objetivo: Enseñar procedimiento operativo que funcione incluso sin DentFlow. Problema: Sin ritual de revisión, la información registrada puede no utilizarse. Función: Proceso / demo condicionada."
+        },
+        "B": {
+          "label": "FUNDAMENTO",
+          "text": "V2 reel 20 y 13; auditoría §7: el tablero sin hábito no constituye implementación  HIPÓTESIS NO VALIDADA: Una revisión breve con criterios claros puede generar aprendizaje sobre necesidades reales."
+        },
+        "C": {
+          "label": "HOOKS",
+          "text": "1) Aunque tengas un buen CRM, si nadie revisa pendientes, sigue faltando una parte.   2) Una reunión semanal de diez minutos puede revelar qué datos faltan.   3) Así haría una revisión de pendientes con un tablero, o incluso con una planilla.  Apertura de prueba: 3; hipótesis creativa, no resultado demostrado."
+        },
+        "D": {
+          "label": "GUION LITERAL",
+          "text": "«Imaginemos una revisión semanal corta entre recepción y dirección. Primero miramos compromisos que vencen; después preguntamos por las tareas sin responsable; al final elegimos qué se hará esta semana. Si DentFlow tiene esas vistas activas, se pueden mostrar con datos ficticios. Si no, alcanza una planilla para explicar el procedimiento. La tecnología sirve cuando el equipo usa la información para decidir. La prueba de verdad es repetir este hábito y observar si la carga resulta razonable.»"
+        },
+        "E": {
+          "label": "PLAN VISUAL",
+          "text": "0-5 s: cámara + cronómetro «reunión 10 min: propuesta».  5-29 s: pantalla de tablero demo verificado o pizarra/planilla rotulada.  29-final: tres decisiones escritas y texto «probar en equipo».  Material en pantalla: Tres filas ficticias: compromiso próximo, falta responsable, caso sin fecha; no mostrar resultados económicos."
+        },
+        "F": {
+          "label": "EDICIÓN",
+          "text": "Cortes entre fases; subtítulos completos; visual simple «ver -> decidir -> registrar». Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares."
+        },
+        "G": {
+          "label": "CTA",
+          "text": "Si coordinás un equipo, probá esta revisión en papel una vez y anotá qué información te faltó."
+        },
+        "H": {
+          "label": "CAPTION LISTO",
+          "text": "La revisión no exige comprar software. Exige reglas claras: qué se mira, quién decide y dónde queda el acuerdo."
+        },
+        "I": {
+          "label": "DISTRIBUCIÓN",
+          "text": "Orgánico: Instagram y archivo adicional horizontal con matriz si la demanda profesional lo justifica.   Relaciones: Solicitar prueba de una semana con responsable voluntario, sin pedir resultados públicos.   Ventas: Ofrecer a prospecto con dudas de adopción la plantilla de reunión (sección 8) antes de demo.   Seguimiento: Después de prueba, preguntar qué campo sobraba y qué faltaba."
+        },
+        "J": {
+          "label": "MEDICIÓN",
+          "text": "Número de responsables que ejecutan revisión y describen información faltante o carga operativa observada.  Registro: ID reel, clínica confirmada, fuente de contacto, fecha y respuesta textual anonimizada."
+        },
+        "K": {
+          "label": "DECISIÓN",
+          "text": "Ajustar la plantilla al proceso real; solo convertirlo en demo de producto tras superar gate y solicitud expresa.  No usar umbrales de conversión sin base de datos suficiente."
+        }
+      },
+      "raw_sections": [],
+      "week": 5,
+      "script": "«Imaginemos una revisión semanal corta entre recepción y dirección. Primero miramos compromisos que vencen; después preguntamos por las tareas sin responsable; al final elegimos qué se hará esta semana. Si DentFlow tiene esas vistas activas, se pueden mostrar con datos ficticios. Si no, alcanza una planilla para explicar el procedimiento. La tecnología sirve cuando el equipo usa la información para decidir. La prueba de verdad es repetir este hábito y observar si la carga resulta razonable.»",
+      "visual_plan": "0-5 s: cámara + cronómetro «reunión 10 min: propuesta».  5-29 s: pantalla de tablero demo verificado o pizarra/planilla rotulada.  29-final: tres decisiones escritas y texto «probar en equipo».  Material en pantalla: Tres filas ficticias: compromiso próximo, falta responsable, caso sin fecha; no mostrar resultados económicos.",
+      "editing_notes": "Cortes entre fases; subtítulos completos; visual simple «ver -> decidir -> registrar». Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares.",
+      "caption": "La revisión no exige comprar software. Exige reglas claras: qué se mira, quién decide y dónde queda el acuerdo.",
+      "cta": "Si coordinás un equipo, probá esta revisión en papel una vez y anotá qué información te faltó.",
+      "source_check": {
+        "source": "DentFlow V3 editable original",
+        "not_automatically_verified": true,
+        "demo_requires_D1_D4_review": true,
+        "needs_owner_approval": true
+      }
+    },
+    {
+      "code": "R16",
+      "title": "¿Qué puede demostrar una semana de prueba?",
+      "type": "reel",
+      "status": "planned",
+      "fields": {
+        "A": {
+          "label": "IDENTIFICACIÓN",
+          "text": "Semana 6; Lun 09/11/2026; audiencia: Decisor con interés y usuario operativo. Objetivo: Separar prueba de usabilidad de resultados comerciales. Problema: Una prueba breve no permite concluir más ventas pero sí detectar fricción. Función: Evaluación / filtro."
+        },
+        "B": {
+          "label": "FUNDAMENTO",
+          "text": "Auditoría §7 y §14 sobre límites de implementación y diseños exploratorios  HIPÓTESIS NO VALIDADA: Compradores valoran una prueba acotada con criterios acordados antes de contratar."
+        },
+        "C": {
+          "label": "HOOKS",
+          "text": "1) Una semana de prueba no alcanza para prometer más pacientes.   2) Si probamos DentFlow, estas son las tres cosas que sí podemos verificar.   3) No te pediría confiar en una demo: pediría observar una tarea real.  Apertura de prueba: 2; hipótesis creativa, no resultado demostrado."
+        },
+        "D": {
+          "label": "GUION LITERAL",
+          "text": "«Si una clínica quiere probar DentFlow, hay tres cuestiones que podemos revisar sin prometer resultados económicos. Uno: si recepción entiende cómo registrar el próximo paso. Dos: cuánto trabajo extra necesita comparado con el proceso actual. Tres: si dirección puede recuperar esa información cuando la necesita. Acordamos las tareas antes de empezar y registramos qué funcionó y qué no. Una semana no demuestra que vas a vender más tratamientos; puede mostrar si vale la pena continuar evaluando el sistema.»"
+        },
+        "E": {
+          "label": "PLAN VISUAL",
+          "text": "0-5 s: cámara con límite «no ROI».  5-28 s: checklist de prueba: tarea, carga, recuperación.  28-final: plan de prueba ilustrativo, sin client cases inventados.  Material en pantalla: Plantilla de experimento sección 8; si no hay despliegue listo, usar test moderado en ambiente demo."
+        },
+        "F": {
+          "label": "EDICIÓN",
+          "text": "Subtítulos y pausas en cada criterio; sin resultados ficticios presentados como testimonios. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares."
+        },
+        "G": {
+          "label": "CTA",
+          "text": "Si necesitás evaluar encaje, pedime el protocolo de prueba y vemos si podemos aplicarlo a tu situación."
+        },
+        "H": {
+          "label": "CAPTION LISTO",
+          "text": "La prueba tiene una pregunta: ¿encaja en el proceso de esta clínica? Definí criterios antes de usar el software y evitá convertir una sesión satisfactoria en promesa de ingresos."
+        },
+        "I": {
+          "label": "DISTRIBUCIÓN",
+          "text": "Orgánico: Instagram; story con pregunta «¿qué evaluarías antes de contratar?» sin recopilar datos sensibles.   Relaciones: Contactar voluntarios que ya expresaron interés en prueba, con expectativas claras.   Ventas: Utilizar la hoja de criterios solo para oportunidades con proceso y decisor identificados.   Seguimiento: Registrar objeciones sin atribuirlas a perfil general por una sola prueba."
+        },
+        "J": {
+          "label": "MEDICIÓN",
+          "text": "Número de prospectos que acuerdan criterios de prueba y resultados operativos documentados, incluso negativos.  Registro: ID reel, clínica confirmada, fuente de contacto, fecha y respuesta textual anonimizada."
+        },
+        "K": {
+          "label": "DECISIÓN",
+          "text": "Si hay fricción repetida, priorizar producto/onboarding; si no hay demanda de prueba, revisar relevancia del problema; no afirmar adquisición por aceptación del protocolo.  No usar umbrales de conversión sin base de datos suficiente."
+        }
+      },
+      "raw_sections": [],
+      "week": 6,
+      "script": "«Si una clínica quiere probar DentFlow, hay tres cuestiones que podemos revisar sin prometer resultados económicos. Uno: si recepción entiende cómo registrar el próximo paso. Dos: cuánto trabajo extra necesita comparado con el proceso actual. Tres: si dirección puede recuperar esa información cuando la necesita. Acordamos las tareas antes de empezar y registramos qué funcionó y qué no. Una semana no demuestra que vas a vender más tratamientos; puede mostrar si vale la pena continuar evaluando el sistema.»",
+      "visual_plan": "0-5 s: cámara con límite «no ROI».  5-28 s: checklist de prueba: tarea, carga, recuperación.  28-final: plan de prueba ilustrativo, sin client cases inventados.  Material en pantalla: Plantilla de experimento sección 8; si no hay despliegue listo, usar test moderado en ambiente demo.",
+      "editing_notes": "Subtítulos y pausas en cada criterio; sin resultados ficticios presentados como testimonios. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares.",
+      "caption": "La prueba tiene una pregunta: ¿encaja en el proceso de esta clínica? Definí criterios antes de usar el software y evitá convertir una sesión satisfactoria en promesa de ingresos.",
+      "cta": "Si necesitás evaluar encaje, pedime el protocolo de prueba y vemos si podemos aplicarlo a tu situación.",
+      "source_check": {
+        "source": "DentFlow V3 editable original",
+        "not_automatically_verified": true,
+        "demo_requires_D1_D4_review": true,
+        "needs_owner_approval": true
+      }
+    },
+    {
+      "code": "R17",
+      "title": "Interpretar una revisión sin inventar pérdidas",
+      "type": "reel",
+      "status": "planned",
+      "fields": {
+        "A": {
+          "label": "IDENTIFICACIÓN",
+          "text": "Semana 6; Mié 11/11/2026; audiencia: Director que descargó el recurso de 10 consultas. Objetivo: Evitar confundir casillas vacías con pacientes perdidos. Problema: Los resultados exploratorios pueden señalar falta de procedimiento, no causalidad económica. Función: Educación / recurso."
+        },
+        "B": {
+          "label": "FUNDAMENTO",
+          "text": "V2 recurso p.42; auditoría §9 exige corregir sesgo y límites  HIPÓTESIS NO VALIDADA: Un informe responsable genera preguntas comerciales más precisas."
+        },
+        "C": {
+          "label": "HOOKS",
+          "text": "1) Encontraste cuatro casillas vacías en una revisión: ¿qué significa realmente?   2) Una tabla incompleta no te dice cuánto dinero perdiste.   3) Así interpretaría diez consultas revisadas sin exagerar los resultados.  Apertura de prueba: 1; hipótesis creativa, no resultado demostrado."
+        },
+        "D": {
+          "label": "GUION LITERAL",
+          "text": "«Supongamos que elegiste diez consultas de un período definido y en cuatro no aparece registrada una próxima revisión. Eso no significa que se hayan perdido cuatro pacientes ni cuatro presupuestos. Puede significar que la clínica no registra esa información, que no correspondía volver a contactar o que el dato vive en otra herramienta. El siguiente paso es preguntar por qué y contrastarlo con el equipo. Un buen diagnóstico distingue falta de registro, falta de proceso y casos en los que no hacía falta seguimiento.»"
+        },
+        "E": {
+          "label": "PLAN VISUAL",
+          "text": "0-5 s: tabla 10 filas totalmente ficticia.  5-27 s: tres interpretaciones alternativas en tarjetas.  27-final: pregunta «¿qué explica la ausencia de este campo?».  Material en pantalla: Mostrar «EJEMPLO INVENTADO» todo el tiempo; cuatro filas vacías ilustrativas, no hallazgo real."
+        },
+        "F": {
+          "label": "EDICIÓN",
+          "text": "No usar barra roja de «pérdidas»; cortes suaves para leer alternativas; subtítulos completos. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares."
+        },
+        "G": {
+          "label": "CTA",
+          "text": "Si hiciste la revisión, respondé qué casilla fue difícil completar y por qué, sin mandarme datos de pacientes."
+        },
+        "H": {
+          "label": "CAPTION LISTO",
+          "text": "Una casilla vacía señala una pregunta, no una pérdida monetaria. La utilidad de revisar diez casos es comprender el proceso y decidir qué comprobar después."
+        },
+        "I": {
+          "label": "DISTRIBUCIÓN",
+          "text": "Orgánico: Instagram; historia recordatoria al recurso solo si está operativo.   Relaciones: Recabar comentarios de administradores sobre utilidad del ejercicio, no resultados personales.   Ventas: En seguimiento a quien completó la hoja, ofrecer interpretación agregada con limitaciones.   Seguimiento: Si hay necesidad y autoridad de compra, invitar a demo; si no, enviar mejora de procedimiento."
+        },
+        "J": {
+          "label": "MEDICIÓN",
+          "text": "Revisiones realmente completadas y razones operativas de campos vacíos, sin tasas extrapoladas.  Registro: ID reel, clínica confirmada, fuente de contacto, fecha y respuesta textual anonimizada."
+        },
+        "K": {
+          "label": "DECISIÓN",
+          "text": "Mantener recurso si origina aprendizaje; simplificar si nadie lo completa; cambiar problema si los datos muestran que no es prioritario.  No usar umbrales de conversión sin base de datos suficiente."
+        }
+      },
+      "raw_sections": [],
+      "week": 6,
+      "script": "«Supongamos que elegiste diez consultas de un período definido y en cuatro no aparece registrada una próxima revisión. Eso no significa que se hayan perdido cuatro pacientes ni cuatro presupuestos. Puede significar que la clínica no registra esa información, que no correspondía volver a contactar o que el dato vive en otra herramienta. El siguiente paso es preguntar por qué y contrastarlo con el equipo. Un buen diagnóstico distingue falta de registro, falta de proceso y casos en los que no hacía falta seguimiento.»",
+      "visual_plan": "0-5 s: tabla 10 filas totalmente ficticia.  5-27 s: tres interpretaciones alternativas en tarjetas.  27-final: pregunta «¿qué explica la ausencia de este campo?».  Material en pantalla: Mostrar «EJEMPLO INVENTADO» todo el tiempo; cuatro filas vacías ilustrativas, no hallazgo real.",
+      "editing_notes": "No usar barra roja de «pérdidas»; cortes suaves para leer alternativas; subtítulos completos. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares.",
+      "caption": "Una casilla vacía señala una pregunta, no una pérdida monetaria. La utilidad de revisar diez casos es comprender el proceso y decidir qué comprobar después.",
+      "cta": "Si hiciste la revisión, respondé qué casilla fue difícil completar y por qué, sin mandarme datos de pacientes.",
+      "source_check": {
+        "source": "DentFlow V3 editable original",
+        "not_automatically_verified": true,
+        "demo_requires_D1_D4_review": true,
+        "needs_owner_approval": true
+      }
+    },
+    {
+      "code": "R18",
+      "title": "Tres preguntas para decidir si vale una demo",
+      "type": "reel",
+      "status": "planned",
+      "fields": {
+        "A": {
+          "label": "IDENTIFICACIÓN",
+          "text": "Semana 6; Vie 13/11/2026; audiencia: Propietario o administrador con objeción identificada. Objetivo: Convertir interés pertinente en siguiente paso voluntario y medir origen. Problema: El consumo de contenido no equivale a intención de compra. Función: Conversión / decisión de continuidad."
+        },
+        "B": {
+          "label": "FUNDAMENTO",
+          "text": "Auditoría §9: separar solicitud de recurso, conversación cualificada y demo  HIPÓTESIS NO VALIDADA: Una invitación específica basada en encaje permite calificar sin presión."
+        },
+        "C": {
+          "label": "HOOKS",
+          "text": "1) Antes de agendar una demo de DentFlow, haría tres preguntas.   2) No necesitás otra presentación si no existe un problema que valga resolver.   3) Una clínica usa WhatsApp, agenda y planilla. ¿Cuándo tiene sentido explorar otro sistema?  Apertura de prueba: 1; hipótesis creativa, no resultado demostrado."
+        },
+        "D": {
+          "label": "GUION LITERAL",
+          "text": "«Antes de ofrecerte una demo, te preguntaría tres cosas. ¿Qué parte del seguimiento te cuesta hoy? ¿Cómo la resolvés con las herramientas que ya tenés? Y, si cambiara el proceso, ¿quién tendría que utilizarlo y decidir la compra? Si no hay un problema importante, no ganamos nada mostrándote pantallas. Si lo hay y una función activa de DentFlow puede cubrirlo, hacemos una demostración enfocada. En estas seis semanas estamos investigando justamente qué clínicas necesitan esa solución y cuáles no.»"
+        },
+        "E": {
+          "label": "PLAN VISUAL",
+          "text": "0-5 s: cámara «tres preguntas».  5-28 s: mostrar 3 tarjetas pregunta, no falso formulario en producto.  28-final: «demo solo si hay encaje» y CTA conversacional.  Material en pantalla: No usar testimonios ni resultados agregados inexistentes; pantalla opcional de demo exclusivamente si validada."
+        },
+        "F": {
+          "label": "EDICIÓN",
+          "text": "Subtítulos; revelar preguntas una por una; dejar 3 segundos para CTA. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares."
+        },
+        "G": {
+          "label": "CTA",
+          "text": "Si sos decisor o administrador y encontraste una dificultad concreta, escribime qué herramienta usás hoy y vemos si tiene sentido una demo de 15 minutos."
+        },
+        "H": {
+          "label": "CAPTION LISTO",
+          "text": "No todas las conversaciones necesitan terminar en venta. Si existe un problema operativo real y DentFlow tiene una función que lo resuelva, tiene sentido evaluar una demo enfocada."
+        },
+        "I": {
+          "label": "DISTRIBUCIÓN",
+          "text": "Orgánico: Instagram; recortar variante para sección «empezar aquí» en perfil solo si leads respondieron.   Relaciones: Solicitar que contactos del sector compartan únicamente con clínicas que pidan evaluar seguimiento.   Ventas: Usar las tres preguntas antes de enviar Calendly o enlace de agenda; registrar rechazo por no-encaje.   Seguimiento: Enviar síntesis de problema y demo específica a interesado que aceptó; no hacer «última oportunidad» artificial."
+        },
+        "J": {
+          "label": "MEDICIÓN",
+          "text": "Conversaciones calificadas únicas con origen declarado y demos realizadas, separadas de mensajes informativos.  Registro: ID reel, clínica confirmada, fuente de contacto, fecha y respuesta textual anonimizada."
+        },
+        "K": {
+          "label": "DECISIÓN",
+          "text": "Conservar si lleva a pruebas reales; modificar encaje si atrae estudiantes/agencias; si solo funciona con prospectos llamados, clasificar como apoyo comercial, no inbound.  No usar umbrales de conversión sin base de datos suficiente."
+        }
+      },
+      "raw_sections": [],
+      "week": 6,
+      "script": "«Antes de ofrecerte una demo, te preguntaría tres cosas. ¿Qué parte del seguimiento te cuesta hoy? ¿Cómo la resolvés con las herramientas que ya tenés? Y, si cambiara el proceso, ¿quién tendría que utilizarlo y decidir la compra? Si no hay un problema importante, no ganamos nada mostrándote pantallas. Si lo hay y una función activa de DentFlow puede cubrirlo, hacemos una demostración enfocada. En estas seis semanas estamos investigando justamente qué clínicas necesitan esa solución y cuáles no.»",
+      "visual_plan": "0-5 s: cámara «tres preguntas».  5-28 s: mostrar 3 tarjetas pregunta, no falso formulario en producto.  28-final: «demo solo si hay encaje» y CTA conversacional.  Material en pantalla: No usar testimonios ni resultados agregados inexistentes; pantalla opcional de demo exclusivamente si validada.",
+      "editing_notes": "Subtítulos; revelar preguntas una por una; dejar 3 segundos para CTA. Exportación 1080x1920 sin marca de agua; revisar zona segura y sonido con auriculares.",
+      "caption": "No todas las conversaciones necesitan terminar en venta. Si existe un problema operativo real y DentFlow tiene una función que lo resuelva, tiene sentido evaluar una demo enfocada.",
+      "cta": "Si sos decisor o administrador y encontraste una dificultad concreta, escribime qué herramienta usás hoy y vemos si tiene sentido una demo de 15 minutos.",
+      "source_check": {
+        "source": "DentFlow V3 editable original",
+        "not_automatically_verified": true,
+        "demo_requires_D1_D4_review": true,
+        "needs_owner_approval": true
+      }
+    },
+    {
+      "code": "A1",
+      "title": "¿Cuánto trabajo cuesta adoptar otra herramienta?",
+      "type": "alternative",
+      "status": "planned",
+      "fields": {
+        "A": {
+          "label": "PERFIL / FUNCIÓN",
+          "text": "Decisor que pregunta por costo total. Objetivo: Enfocar evaluación en precio + tiempo + duplicación de tareas."
+        },
+        "B": {
+          "label": "FUNDAMENTO",
+          "text": "La preocupación principal no es solo cuota sino costo operativo [hipótesis; requiere observación en prospección]."
+        },
+        "C": {
+          "label": "TRES APERTURAS",
+          "text": "1) ¿El precio del CRM incluye el tiempo extra de tu equipo?  2) Una herramienta barata puede salir cara si nadie la usa.  3) Antes de comprar, medí cuánto se vuelve a cargar.  Selección inicial: 1."
+        },
+        "D": {
+          "label": "GUION LITERAL",
+          "text": "«Cuando una clínica compara software, es tentador mirar únicamente la cuota mensual. Pero también existe el tiempo de implementación y el trabajo cotidiano que podría duplicarse. No te voy a inventar una cifra de ahorro. Propongo anotar cada tarea actual, identificar qué cambiaría con DentFlow y hacer una prueba limitada con la versión disponible. Si la carga adicional supera el beneficio percibido por tu equipo, esa es información suficiente para no avanzar todavía.»"
+        },
+        "E": {
+          "label": "VISUAL",
+          "text": "Cámara: pregunta sobre costo total.  Matriz: cuota / puesta en marcha / carga / capacitación, sin valores inventados.  Cierre: invitación a prueba de proceso acotada. Pantalla: Matriz de cuatro costos, todos con casillas «dato a completar»."
+        },
+        "F": {
+          "label": "EDICIÓN",
+          "text": "Cortes por criterio, subtítulos y alto contraste; sin animaciones de dinero. Subtítulos en español, tamaño legible en celular."
+        },
+        "G": {
+          "label": "CTA",
+          "text": "Si estás comparando, te comparto una matriz para medir los cuatro componentes."
+        },
+        "H": {
+          "label": "CAPTION",
+          "text": "El costo total incluye trabajo de equipo. La matriz operativa está en la sección 8 y debe completarse con datos reales de cada clínica."
+        },
+        "I": {
+          "label": "DISTRIBUCIÓN",
+          "text": "Orgánico: Reel informativo en Instagram. Relaciones: Solicitar revisión voluntaria a gestores que ya cambiaron de sistema. Ventas: Usar solo cuando preguntan por precio o implementación. Seguimiento: Enviar matriz y ofrecer verificar supuestos, no descuentos sin autorización."
+        },
+        "J": {
+          "label": "MÉTRICA",
+          "text": "Comparaciones completadas y objeción exacta después del ejercicio."
+        },
+        "K": {
+          "label": "DECISIÓN",
+          "text": "Si predominan preocupaciones de carga, mejorar producto antes que mensajes de precio."
+        }
+      },
+      "raw_sections": [],
+      "activation_rule": "Si en dos o más entrevistas independientes surge objeción de precio o implementación como prioridad, sin tomar el número como validación estadística.",
+      "week": null,
+      "script": "«Cuando una clínica compara software, es tentador mirar únicamente la cuota mensual. Pero también existe el tiempo de implementación y el trabajo cotidiano que podría duplicarse. No te voy a inventar una cifra de ahorro. Propongo anotar cada tarea actual, identificar qué cambiaría con DentFlow y hacer una prueba limitada con la versión disponible. Si la carga adicional supera el beneficio percibido por tu equipo, esa es información suficiente para no avanzar todavía.»",
+      "visual_plan": "Cámara: pregunta sobre costo total.  Matriz: cuota / puesta en marcha / carga / capacitación, sin valores inventados.  Cierre: invitación a prueba de proceso acotada. Pantalla: Matriz de cuatro costos, todos con casillas «dato a completar».",
+      "editing_notes": "Cortes por criterio, subtítulos y alto contraste; sin animaciones de dinero. Subtítulos en español, tamaño legible en celular.",
+      "caption": "El costo total incluye trabajo de equipo. La matriz operativa está en la sección 8 y debe completarse con datos reales de cada clínica.",
+      "cta": "Si estás comparando, te comparto una matriz para medir los cuatro componentes.",
+      "source_check": {
+        "source": "DentFlow V3 editable original",
+        "not_automatically_verified": true,
+        "demo_requires_D1_D4_review": true,
+        "needs_owner_approval": true
+      }
+    },
+    {
+      "code": "A2",
+      "title": "La auditoría no necesita nombres de pacientes",
+      "type": "alternative",
+      "status": "planned",
+      "fields": {
+        "A": {
+          "label": "PERFIL / FUNCIÓN",
+          "text": "Propietario preocupado por privacidad. Objetivo: Eliminar riesgo en captación y hacer explícitos límites de información."
+        },
+        "B": {
+          "label": "FUNDAMENTO",
+          "text": "La claridad sobre tratamiento de datos puede desbloquear evaluación segura [hipótesis; requiere observación en prospección]."
+        },
+        "C": {
+          "label": "TRES APERTURAS",
+          "text": "1) No me envíes conversaciones de pacientes para que te audite la recepción.  2) El diagnóstico comercial empieza sin nombres, teléfonos ni historias clínicas.  3) ¿Qué información necesito realmente para revisar un proceso?  Selección inicial: 1."
+        },
+        "D": {
+          "label": "GUION LITERAL",
+          "text": "«Para revisar cómo se organizan las consultas comerciales de una clínica, no necesito nombres, teléfonos, radiografías ni capturas de chats. Podemos trabajar con una tabla que la clínica completa internamente: si cada caso tiene estado, responsable y siguiente paso, cuando corresponda. Lo que compartan puede ser un resumen agregado y voluntario. Antes de cualquier prueba real del software deben acordarse responsabilidades, accesos y tratamiento de datos con asesoramiento adecuado. Un diagnóstico comercial informal nunca justifica exponer información clínica.»"
+        },
+        "E": {
+          "label": "VISUAL",
+          "text": "Cámara: «No mandes chats».  Plantilla ficticia sin columnas identificables.  Resumen agregado ilustrativo y nota «revisión legal separada». Pantalla: «Sin nombres / sin teléfonos / sin historia clínica»."
+        },
+        "F": {
+          "label": "EDICIÓN",
+          "text": "Subtítulos, texto permanente de advertencia de privacidad, sin imágenes de pacientes. Subtítulos en español, tamaño legible en celular."
+        },
+        "G": {
+          "label": "CTA",
+          "text": "Si querés la plantilla sin datos personales, pedímela y te envío el procedimiento."
+        },
+        "H": {
+          "label": "CAPTION",
+          "text": "La revisión exploratoria utiliza datos internos o resúmenes agregados. No recibimos historiales ni capturas identificables en mensajes comerciales."
+        },
+        "I": {
+          "label": "DISTRIBUCIÓN",
+          "text": "Orgánico: Publicación y recurso fijo cuando el programa se encuentre habilitado. Relaciones: Enviar a responsable administrativo que pidió garantías. Ventas: Compartir ante preguntas de privacidad; no prometer cumplimiento normativo automático. Seguimiento: Aclarar que contratos y tratamiento real requieren revisión legal/técnica específica."
+        },
+        "J": {
+          "label": "MÉTRICA",
+          "text": "Preguntas de privacidad resueltas y descartes razonados de operaciones inseguras."
+        },
+        "K": {
+          "label": "DECISIÓN",
+          "text": "Si persisten inquietudes, pausar recolección y revisar procedimiento, no redoblar presión."
+        }
+      },
+      "raw_sections": [],
+      "activation_rule": "Si aparecen preguntas reiteradas sobre confidencialidad, acceso de empleados o envío de datos para diagnóstico.",
+      "week": null,
+      "script": "«Para revisar cómo se organizan las consultas comerciales de una clínica, no necesito nombres, teléfonos, radiografías ni capturas de chats. Podemos trabajar con una tabla que la clínica completa internamente: si cada caso tiene estado, responsable y siguiente paso, cuando corresponda. Lo que compartan puede ser un resumen agregado y voluntario. Antes de cualquier prueba real del software deben acordarse responsabilidades, accesos y tratamiento de datos con asesoramiento adecuado. Un diagnóstico comercial informal nunca justifica exponer información clínica.»",
+      "visual_plan": "Cámara: «No mandes chats».  Plantilla ficticia sin columnas identificables.  Resumen agregado ilustrativo y nota «revisión legal separada». Pantalla: «Sin nombres / sin teléfonos / sin historia clínica».",
+      "editing_notes": "Subtítulos, texto permanente de advertencia de privacidad, sin imágenes de pacientes. Subtítulos en español, tamaño legible en celular.",
+      "caption": "La revisión exploratoria utiliza datos internos o resúmenes agregados. No recibimos historiales ni capturas identificables en mensajes comerciales.",
+      "cta": "Si querés la plantilla sin datos personales, pedímela y te envío el procedimiento.",
+      "source_check": {
+        "source": "DentFlow V3 editable original",
+        "not_automatically_verified": true,
+        "demo_requires_D1_D4_review": true,
+        "needs_owner_approval": true
+      }
+    },
+    {
+      "code": "A3",
+      "title": "Cuándo alcanza con una planilla bien llevada",
+      "type": "alternative",
+      "status": "planned",
+      "fields": {
+        "A": {
+          "label": "PERFIL / FUNCIÓN",
+          "text": "Propietario con proceso simple y estable. Objetivo: Reconocer ausencia de necesidad y aprender criterios de segmentación."
+        },
+        "B": {
+          "label": "FUNDAMENTO",
+          "text": "Para operaciones sencillas el cambio tecnológico puede ser innecesario [hipótesis; requiere observación en prospección]."
+        },
+        "C": {
+          "label": "TRES APERTURAS",
+          "text": "1) Una planilla puede ser suficiente. El problema es asumir que todas las clínicas necesitan un CRM.  2) ¿Cuándo NO vale la pena migrar a otra herramienta?  3) Si tu equipo encuentra los pendientes en segundos, miraría otra cosa antes de venderte software.  Selección inicial: 2."
+        },
+        "D": {
+          "label": "GUION LITERAL",
+          "text": "«Si tu clínica tiene pocas consultas, una persona responsable y una planilla actualizada que todos entienden, sumar un CRM puede ser trabajo innecesario. Antes de cambiar preguntaría si la planilla permite recuperar pendientes, asignar responsables y sostener el proceso cuando esa persona se ausenta. Si la respuesta es sí y no existe otra necesidad concreta, quedate con lo que funciona. DentFlow tiene sentido solamente donde una función verificable resuelve una dificultad que importa más que el costo de incorporarla.»"
+        },
+        "E": {
+          "label": "VISUAL",
+          "text": "Cámara: «puede ser suficiente».  Planilla ficticia con estado / responsable / siguiente revisión.  Comparación de preguntas de encaje sin pantalla de producto. Pantalla: «Necesidad primero. Herramienta después»."
+        },
+        "F": {
+          "label": "EDICIÓN",
+          "text": "Ritmo calmado, subtítulos y no ridiculizar trabajo manual. Subtítulos en español, tamaño legible en celular."
+        },
+        "G": {
+          "label": "CTA",
+          "text": "¿Qué parte de tu proceso actual funciona tan bien que no cambiarías?"
+        },
+        "H": {
+          "label": "CAPTION",
+          "text": "Una herramienta más no es una mejora automática. Este reel delimita cuándo podría NO hacer falta otro CRM."
+        },
+        "I": {
+          "label": "DISTRIBUCIÓN",
+          "text": "Orgánico: Reel de filtro en Instagram. Relaciones: Conversar con propietarios de operaciones pequeñas voluntarios. Ventas: Enviar si el prospecto ya tiene sistema sencillo sin brechas. Seguimiento: Cerrar respetuosamente el caso si no existe necesidad concreta."
+        },
+        "J": {
+          "label": "MÉTRICA",
+          "text": "Razones observadas de no encaje y mejores criterios de segmentación."
+        },
+        "K": {
+          "label": "DECISIÓN",
+          "text": "Conservar criterios de exclusión si se repiten en casos comparables; evitar seguir prospectando ese subsegmento sin otra razón."
+        }
+      },
+      "raw_sections": [],
+      "activation_rule": "Si entrevistas demuestran que la mayoría de un subsegmento ya resuelve continuidad con herramientas actuales.",
+      "week": null,
+      "script": "«Si tu clínica tiene pocas consultas, una persona responsable y una planilla actualizada que todos entienden, sumar un CRM puede ser trabajo innecesario. Antes de cambiar preguntaría si la planilla permite recuperar pendientes, asignar responsables y sostener el proceso cuando esa persona se ausenta. Si la respuesta es sí y no existe otra necesidad concreta, quedate con lo que funciona. DentFlow tiene sentido solamente donde una función verificable resuelve una dificultad que importa más que el costo de incorporarla.»",
+      "visual_plan": "Cámara: «puede ser suficiente».  Planilla ficticia con estado / responsable / siguiente revisión.  Comparación de preguntas de encaje sin pantalla de producto. Pantalla: «Necesidad primero. Herramienta después».",
+      "editing_notes": "Ritmo calmado, subtítulos y no ridiculizar trabajo manual. Subtítulos en español, tamaño legible en celular.",
+      "caption": "Una herramienta más no es una mejora automática. Este reel delimita cuándo podría NO hacer falta otro CRM.",
+      "cta": "¿Qué parte de tu proceso actual funciona tan bien que no cambiarías?",
+      "source_check": {
+        "source": "DentFlow V3 editable original",
+        "not_automatically_verified": true,
+        "demo_requires_D1_D4_review": true,
+        "needs_owner_approval": true
+      }
+    }
+  ]
+}

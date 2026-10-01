@@ -1,5 +1,5 @@
 import { randomUUID, randomBytes } from "node:crypto";
-import { db, one, unpack } from "./db";
+import { db, one, unpack, transaction } from "./db";
 import { owner, now } from "./config";
 import { Asset, JobData, Output, Settings, settingsSchema } from "./contracts";
 import { check, hash, mediaLink } from "./security";
@@ -101,16 +101,18 @@ export async function createJob(
     );
     projectId = String(parent.project_id);
   }
-  if (projectId)
-    check(
-      await one("SELECT id FROM projects WHERE id=$1 AND owner_id=$2", [
-        projectId,
-        owner,
-      ]),
-      404,
-      "Proyecto no encontrado.",
+  if (projectId) {
+    const project = await one(
+      "SELECT * FROM projects WHERE id=$1 AND owner_id=$2",
+      [projectId, owner],
     );
-  else {
+    check(project, 404, "Proyecto no encontrado.");
+    check(
+      !unpack<{ deleting?: boolean }>(project).deleting,
+      409,
+      "El proyecto se está borrando.",
+    );
+  } else {
     projectId = randomUUID();
     await db(
       "INSERT INTO projects (id,owner_id,content_id,created_at,data) VALUES ($1,$2,$3,$4,$5)",
@@ -129,19 +131,46 @@ export async function createJob(
   const identity = randomUUID(),
     stamp = now();
   const data: JobData = { settings, content };
-  await db(
-    "INSERT INTO jobs (id,owner_id,project_id,status,created_at,updated_at,intent_key,settings_hash,data) VALUES ($1,$2,$3,$4,$5,$5,$6,$7,$8) ON CONFLICT(owner_id,intent_key) DO NOTHING",
-    [
-      identity,
-      owner,
-      projectId,
-      "queued",
-      stamp,
-      intentKey,
-      settingsHash,
-      JSON.stringify(data),
-    ],
-  );
+  await transaction(async () => {
+    const project = await one(
+      "UPDATE projects SET data=data WHERE id=$1 AND owner_id=$2 RETURNING *",
+      [projectId, owner],
+    );
+    check(
+      project && !unpack<{ deleting?: boolean }>(project).deleting,
+      409,
+      "El proyecto ya se está borrando.",
+    );
+    const references = [
+      ...new Set(
+        [
+          settings.asset_id,
+          settings.music_asset_id,
+          ...settings.scenes.map((s) => s.asset_id),
+        ].filter(Boolean),
+      ),
+    ].sort();
+    for (const reference of references) {
+      const locked = await one(
+        "UPDATE assets SET status=status WHERE id=$1 AND owner_id=$2 AND status='ready' RETURNING id",
+        [reference, owner],
+      );
+      check(locked, 409, "Un recurso ya no está disponible.");
+    }
+    await db(
+      "INSERT INTO jobs (id,owner_id,project_id,status,created_at,updated_at,intent_key,settings_hash,data) VALUES ($1,$2,$3,$4,$5,$5,$6,$7,$8) ON CONFLICT(owner_id,intent_key) DO NOTHING",
+      [
+        identity,
+        owner,
+        projectId,
+        "queued",
+        stamp,
+        intentKey,
+        settingsHash,
+        JSON.stringify(data),
+      ],
+    );
+  });
   const result = await one(
     "SELECT * FROM jobs WHERE owner_id=$1 AND intent_key=$2",
     [owner, intentKey],

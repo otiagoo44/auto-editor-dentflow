@@ -73,7 +73,7 @@ export const contentSchema = z
     cta: text(1000).default(""),
     visual_plan: z.unknown().optional(),
     scenes: z.array(scene).max(100).default([]),
-    demo_gate: text(1000).default(""),
+    demo_gate: text(8000).default(""),
     demo_approved: z.boolean().default(false),
     date: text(30).default(""),
     status: z
@@ -128,6 +128,7 @@ export const settingsSchema = z
 export type Settings = z.infer<typeof settingsSchema>;
 export type Asset = {
   id: string;
+  status?: "ready" | "deleting";
   name: string;
   mime: string;
   size: number;

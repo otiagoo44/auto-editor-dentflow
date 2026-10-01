@@ -1,4 +1,4 @@
-param([switch]$Install,[switch]$WorkerOnly)
+param([switch]$Install,[switch]$WorkerOnly,[switch]$Remote)
 $ErrorActionPreference='Stop'
 $repoDir=Split-Path $PSScriptRoot -Parent
 $env:Path += ';' + [Environment]::GetEnvironmentVariable('Path','User') + ';' + [Environment]::GetEnvironmentVariable('Path','Machine')
@@ -9,6 +9,15 @@ $env:PYTHONUTF8='1'
 $configDir=Join-Path $env:LOCALAPPDATA 'DentFlow\studio'
 New-Item -ItemType Directory -Force -Path $configDir | Out-Null
 $configFile=Join-Path $configDir 'worker.local.json'
+if ($Remote) {
+    if (-not $WorkerOnly) { throw 'El modo remoto inicia solamente el worker.' }
+    $remoteFile=Join-Path $configDir 'worker.remote.json'
+    if (-not (Test-Path -LiteralPath $remoteFile)) { throw 'Ejecuta preparar_vercel.bat y conectar_worker_vercel.bat primero.' }
+    $remoteConfig=Get-Content -LiteralPath $remoteFile -Raw | ConvertFrom-Json
+    if (-not $remoteConfig.url) { throw 'Ejecuta conectar_worker_vercel.bat primero.' }
+    & $pythonExe (Join-Path $repoDir 'worker\agent.py') --config $remoteFile
+    exit $LASTEXITCODE
+}
 $envFile=Join-Path $repoDir 'web\.env.local'
 if (-not (Test-Path -LiteralPath $configFile)) {
     $bytes=New-Object byte[] 32

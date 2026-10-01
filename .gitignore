@@ -38,3 +38,4 @@ worker/.state/
 web/test-results/
 web/playwright-report/
 web/.env.local
+.vercel/

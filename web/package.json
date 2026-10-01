@@ -13,7 +13,7 @@
     "format": "prettier --write app components lib tests scripts proxy.ts next.config.ts"
   },
   "engines": {
-    "node": ">=24"
+    "node": "24.x"
   },
   "dependencies": {
     "@vercel/blob": "2.8.0",

@@ -1,6 +1,9 @@
 import sys
 import tempfile
 import unittest
+import io
+import urllib.error
+from unittest.mock import patch, Mock
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'src'));sys.path.insert(0,str(ROOT/'worker'))
@@ -46,6 +49,25 @@ class StudioPlannerTests(unittest.TestCase):
             state=Path(td);unfinished=state/'unfinished';unfinished.mkdir();(unfinished/'raw.mp4').write_bytes(b'fixture')
             cleanup(state,days=0)
             self.assertTrue((unfinished/'raw.mp4').exists())
+
+    def test_worker_retries_lost_finish_response_but_never_replays_lease(self):
+        client=Client('http://127.0.0.1:3000','x'*32)
+        with patch.object(client,'_request',side_effect=[TimeoutError(),{'ok':True}]) as call, patch('agent.time.sleep'):
+            self.assertEqual(client.request('/api/worker/test/finish',{}),{'ok':True})
+            self.assertEqual(call.call_count,2)
+        with patch.object(client,'_request',side_effect=TimeoutError()) as call:
+            with self.assertRaises(TimeoutError):client.request('/api/worker/lease',{})
+            self.assertEqual(call.call_count,1)
+
+    def test_interrupted_download_never_becomes_a_valid_cached_source(self):
+        client=Client('http://127.0.0.1:3000','x'*32)
+        with tempfile.TemporaryDirectory() as td:
+            target=Path(td)/'raw.mp4'
+            with patch.object(client.opener,'open',return_value=io.BytesIO(b'short')):
+                with self.assertRaisesRegex(ValueError,'invalid_media'):
+                    client.download({'id':'job','lease_token':'lease'},{'id':'asset','size':100},target,100)
+            self.assertFalse(target.exists())
+            self.assertFalse(target.with_name('raw.mp4.partial').exists())
 
 
 if __name__=='__main__':unittest.main()

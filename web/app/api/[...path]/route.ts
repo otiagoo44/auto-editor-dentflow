@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { z, ZodError } from "zod";
-import { db, one, unpack } from "@/lib/db";
+import { db, one, unpack, transaction } from "@/lib/db";
 import { owner, now, remote, maxBytes, maxDuration } from "@/lib/config";
 import {
   authorize,
@@ -38,6 +38,11 @@ import {
   rateLimit,
 } from "@/lib/jobs";
 import { saveLocal, streamFile, uploadToken, info } from "@/lib/storage";
+import {
+  deleteProject,
+  deleteAsset,
+  cleanupAbandonedUploads,
+} from "@/lib/cleanup";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -111,16 +116,21 @@ async function dispatch(req: Request) {
     }
   }
   if (p[0] === "assets") {
+    if (method === "DELETE" && p[1]) {
+      id.parse(p[1]);
+      await deleteAsset(p[1]);
+      return response({ ok: true });
+    }
     if (method === "GET" && !p[1])
       return response(
         (
           await db(
-            "SELECT * FROM assets WHERE owner_id=$1 AND status=$2 ORDER BY created_at DESC",
-            [owner, "ready"],
+            "SELECT * FROM assets WHERE owner_id=$1 AND status IN ('ready','deleting') ORDER BY created_at DESC",
+            [owner],
           )
         ).map((r) => {
           const { key, ...a } = unpack<Asset>(r);
-          return a;
+          return { ...a, status: r.status };
         }),
       );
     if (method === "POST" && !p[1]) {
@@ -219,6 +229,13 @@ async function dispatch(req: Request) {
       return streamFile(req, a.key, a.mime);
     }
   }
+  if (p[0] === "projects" && method === "DELETE" && p[1]) {
+    id.parse(p[1]);
+    await deleteProject(p[1]);
+    return response({ ok: true });
+  }
+  if (p[0] === "maintenance" && method === "POST")
+    return response({ removed: await cleanupAbandonedUploads() });
   if (p[0] === "projects" && method === "GET")
     return response(
       await db(
@@ -343,6 +360,13 @@ async function dispatch(req: Request) {
     );
   }
   if (p[0] === "worker") {
+    if (method === "GET" && p[1] === "status") {
+      await db("SELECT 1 AS ready");
+      return response({
+        ready: !remote() || Boolean(process.env.BLOB_READ_WRITE_TOKEN),
+        mode: remote() ? "remote" : "local",
+      });
+    }
     if (method === "POST" && p[1] === "lease") {
       const b = z
         .object({
@@ -357,6 +381,25 @@ async function dispatch(req: Request) {
     }
     id.parse(p[1]);
     const token = req.headers.get("x-lease-token") || "";
+    // A lost HTTP response must not turn an already committed output into a failure.
+    if (method === "POST" && p[2] === "finish") {
+      const completed = await job(p[1]);
+      if (["preview_ready", "final_ready"].includes(String(completed.status))) {
+        const body = await jsonBody(req);
+        const output = await one(
+          "SELECT data FROM outputs WHERE job_id=$1 AND owner_id=$2",
+          [p[1], owner],
+        );
+        check(
+          output &&
+            unpack<Output>(output).sha256 === body.sha256 &&
+            unpack<Output>(output).size === body.size,
+          409,
+          "La salida ya finalizada no coincide.",
+        );
+        return response({ ok: true });
+      }
+    }
     const row = await requireLease(p[1], token),
       data = unpack<JobData>(row);
     if (method === "POST" && p[2] === "heartbeat") {
@@ -457,6 +500,11 @@ async function dispatch(req: Request) {
       );
       const details = await info(outputKey);
       check(details.size === b.size, 400, "Salida incompleta.");
+      check(
+        b.report.source_sha256 === b.source_sha256,
+        400,
+        "Identidad de fuente inconsistente.",
+      );
       const output: Output = {
         id: randomUUID(),
         kind: data.settings.kind,
@@ -465,37 +513,44 @@ async function dispatch(req: Request) {
       };
       // Keep report separate from downloadable metadata, and never expose storage paths.
       delete (output as Output & { report?: unknown }).report;
-      await changeLease(p[1], token, "uploading", {
-        ...data,
-        report: b.report,
-        warnings: b.report.warnings,
+      await transaction(async () => {
+        await changeLease(p[1], token, "uploading", {
+          ...data,
+          report: b.report,
+          warnings: b.report.warnings,
+        });
+        await db(
+          "INSERT INTO outputs (id,job_id,owner_id,kind,created_at,data) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT(job_id,kind) DO UPDATE SET id=excluded.id,created_at=excluded.created_at,data=excluded.data",
+          [output.id, p[1], owner, output.kind, now(), JSON.stringify(output)],
+        );
+        await db(
+          "INSERT INTO editorial_plans (id,project_id,job_id,owner_id,created_at,data) VALUES ($1,$2,$3,$4,$5,$6)",
+          [
+            randomUUID(),
+            row.project_id,
+            p[1],
+            owner,
+            now(),
+            JSON.stringify(b.report),
+          ],
+        );
+        const finished = await db(
+          "UPDATE jobs SET status=$1,lease_hash=NULL,lease_until=NULL,updated_at=$2 WHERE id=$3 AND lease_hash=$4 AND status<>$5 RETURNING id",
+          [
+            data.settings.kind + "_ready",
+            now(),
+            p[1],
+            hash(token),
+            "cancel_requested",
+          ],
+        );
+        check(
+          finished.length,
+          409,
+          "El trabajo fue cancelado antes de finalizar.",
+        );
+        await event(p[1], data.settings.kind + "_ready");
       });
-      await db(
-        "INSERT INTO outputs (id,job_id,owner_id,kind,created_at,data) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT(job_id,kind) DO NOTHING",
-        [output.id, p[1], owner, output.kind, now(), JSON.stringify(output)],
-      );
-      await db(
-        "INSERT INTO editorial_plans (id,project_id,job_id,owner_id,created_at,data) VALUES ($1,$2,$3,$4,$5,$6)",
-        [
-          randomUUID(),
-          row.project_id,
-          p[1],
-          owner,
-          now(),
-          JSON.stringify(b.report),
-        ],
-      );
-      await db(
-        "UPDATE jobs SET status=$1,lease_hash=NULL,lease_until=NULL,updated_at=$2 WHERE id=$3 AND lease_hash=$4 AND status<>$5",
-        [
-          data.settings.kind + "_ready",
-          now(),
-          p[1],
-          hash(token),
-          "cancel_requested",
-        ],
-      );
-      await event(p[1], data.settings.kind + "_ready");
       return response({ ok: true });
     }
     if (method === "POST" && p[2] === "fail") {
@@ -569,4 +624,5 @@ export {
   handler as POST,
   handler as PUT,
   handler as PATCH,
+  handler as DELETE,
 };

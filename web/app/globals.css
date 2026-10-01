@@ -800,7 +800,7 @@ details li {
   font-size: 12px;
   color: var(--muted);
 }
-.job-list > button,
+.job-list > div > button:first-child,
 .version-list > button {
   display: flex;
   width: 100%;
@@ -813,7 +813,7 @@ details li {
   border-radius: 0;
   justify-content: space-between;
 }
-.job-list > button > div {
+.job-list > div > button:first-child > div {
   flex: 1;
 }
 .job-list small {
@@ -1129,11 +1129,11 @@ footer {
   .scene-editor .section-line .badge {
     font-size: 9px;
   }
-  .job-list > button {
+  .job-list > div > button:first-child {
     flex-wrap: wrap;
     gap: 10px;
   }
-  .job-list > button > div {
+  .job-list > div > button:first-child > div {
     min-width: 100%;
   }
   .section-line {

@@ -1,25 +1,28 @@
-# DentFlow Studio V3 — checkpoint de implementación
+# DentFlow Studio V3 — estado para publicación manual
 
-## Base y alcance
+El editor web y el agente Windows están implementados. La publicación en Vercel queda a cargo del propietario, según su instrucción. La web requiere una base Postgres, Vercel Blob privado y el agente de esta PC conectado a la URL de producción. Los pasos exactos están en `web/README.md`.
 
-- 2026-09-30: rama `feat/dentflow-studio-web`, desde `55e1629` (`origin/v2.1-remotion`). Fetch realizado; main conservada. Los únicos cambios iniciales eran los tres informes nuevos sin seguimiento.
-- Windows, Python del entorno `%LOCALAPPDATA%/DentFlow/venv`, Node 24.15.0, motores existentes.
-- Leídos auditoría 01, arquitectura 02 y mega-prompt 03. Este último gobierna el trabajo. No se publican servicios ni se contratan recursos.
-- No encontrado `SEED_CONTENIDO_V3_18_REELS_3_ALTERNATIVAS.json`. Solicitado al usuario. El Reel 1 legado permanece independiente; ninguna demo equivale a R01.
-- Faltan dos tomas iPhone reales y credenciales/configuración de staging remoto. No se declara aceptación editorial ni E2E remoto.
+## Alcance entregado
 
-## Fases
+- Checkpoint inicial de los 55 cambios anteriores: `ea030e7`, conservado y publicado en la rama de trabajo antes de continuar.
+- Seed V3 original incorporado: R01–R18 y A1–A3, con guiones, hooks, captions, CTA, planes visuales y compuertas D1–D4. La importación es idempotente, mantiene originales y versiones editadas. El Reel 1 legado sigue separado.
+- Interfaz de contenido, creación libre, carga de medios, borradores, corrección de palabras, versiones, final, descarga, biblioteca, historial, borrado y publicación manual.
+- API con autenticación de propietario y agente, enlaces de medios firmados, límites de subida/renders, almacenamiento local o Blob privado, cola persistente, leases, heartbeat y operaciones de finalización transaccionales.
+- Agente saliente Windows que reutiliza fuente y render verificados tras reinicio, comprueba SHA, reintenta errores transitorios y mantiene diagnóstico local. Un trabajo por vez; la PC debe permanecer encendida.
+- Archivos privados de preparación para Vercel generados en `%LOCALAPPDATA%\DentFlow\studio`, fuera de Git. No contienen credenciales de Postgres ni de Blob hasta que el propietario conecte esos recursos en Vercel.
 
-- [ ] Fase 0: suite completa Windows, diagnóstico, renders sintéticos y QA visual.
-- [ ] Fase 1: upload → worker → preview → corrección → final en Studio local.
-- [ ] Fase 2: propuestas editoriales deterministas, biblioteca, versiones, publicación manual.
-- [ ] Fase 3: adaptadores remotos, protección, pruebas de acceso; despliegue requiere configuración autorizada.
+## Validación realizada en esta PC
 
-## Cambios iniciales
+- Web: 13 pruebas unitarias/integración pasadas, TypeScript sin errores, build optimizado de Next.js aprobado, `npm audit` con 0 vulnerabilidades al instalar. La versión compilada respondió en `127.0.0.1:3000` y cargó los 21 contenidos originales.
+- Motor: suite completa de 49 pruebas pasada (1 omisión por muestra ASR no provista); prueba ASR offline con muestra existente ejecutada aparte y pasada. La prueba de integridad de descarga y repetición de finalización del agente también pasó.
+- E2E HTTP local: subida real, SHA, solicitud idempotente, transcripción sin red, borrador 360×640, dos correcciones, nueva versión, final 1080×1920, tres SHA distintos, descarga/decodificación íntegra y rango HTTP 206. Evidencia en `%LOCALAPPDATA%\DentFlow\validacion_v3\e2e_65f5775a-d2be-48b8-a5c8-b3a56a92dde4\evidence.json`.
+- Revisión visual: biblioteca V3 y editor navegados en Chrome en escritorio y ancho estrecho; cuadro del final sintético revisado en 0, 3, 6 y 9 segundos. El material de prueba muestra una placa sintética, no una filmación de iPhone.
+- Un render inicial falló porque Chromium de Remotion agotó sus 25 segundos de arranque mientras Windows tenía poca memoria libre. El reintento del mismo trabajo terminó bien; el E2E posterior completó tres renders seguidos. Se conserva el diagnóstico en la carpeta local del agente.
 
-Contrato captions exclusivo por motor, unión de pausas cortas para música y rampas suaves; Chromium admite ruta explícita y comprueba ejecución sin descargar. CI incorpora V2.
+## Validación pendiente al publicar
 
-## Evidencia
+- Conectar Postgres y Blob privado, importar las variables privadas, publicar desde GitHub y conectar el agente a la URL de producción. No hubo acceso a ese equipo de Vercel en esta sesión, por lo que el flujo remoto aún no está probado.
+- Repetir en producción el recorrido de `web/README.md`, incluyendo acceso no autenticado, conexión del agente, subida, preview, corrección, final y descarga.
+- Revisar con sonido y en teléfono dos tomas iPhone reales para aceptar voz, color, subtítulos, zonas seguras y calidad editorial. Esas tomas no están en el repositorio.
 
-Regresión en ejecución: `%LOCALAPPDATA%/DentFlow/validacion_v3/baseline.log`.
-Actualizar con resultados observados antes de cerrar cada fase.
+No declarar una demo D1–D4 ni una propuesta visual como aprobada sin la evidencia editorial correspondiente. El sistema permite un montaje básico de cámara y subtítulos cuando falta esa aprobación.
