@@ -166,7 +166,10 @@ class AutoTests(unittest.TestCase):
                     e.process_reel(folder, config(), auto=True)
             self.assertEqual(digest, e.fingerprint(folder/'OUTPUT/VIDEO_PREVIEW.mp4'))
             repeat = e.process_reel(folder, config(), auto=True, preview=True)
-            self.assertEqual(e.fingerprint(final), e.fingerprint(repeat))
+            def decoded_video_hash(path):
+                return e.run(['ffmpeg','-v','error','-i',path,'-map','0:v:0',
+                              '-f','hash','-hash','SHA256','-'])
+            self.assertEqual(decoded_video_hash(final), decoded_video_hash(repeat))
 
     def test_asr_failure_is_camera_only(self):
         with tempfile.TemporaryDirectory() as td:
