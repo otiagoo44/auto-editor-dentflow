@@ -58,8 +58,9 @@ def render_options(spec, override=None):
     template = value.get('template', 'educativo')
     if engine not in ('ffmpeg', 'remotion') or template not in ('educativo', 'comercial'):
         raise ValueError('engine: ffmpeg|remotion; template: educativo|comercial.')
-    if value.get('captions', 'remotion' if engine == 'remotion' else 'ass') not in ('ass', 'remotion'):
-        raise ValueError('captions: ass|remotion; el motor elegido dibuja una sola pista.')
+    captions = 'remotion' if engine == 'remotion' else 'ass'
+    if value.get('captions', captions) != captions:
+        raise ValueError(f'El motor {engine} requiere captions={captions}; no admite otra pista.')
     music = value.get('music', {})
     if not isinstance(music, dict) or set(music) - {'enabled', 'file', 'rights_declared', 'volume', 'ducking'}:
         raise ValueError('music admite enabled, file, rights_declared, volume, ducking.')
@@ -73,7 +74,7 @@ def render_options(spec, override=None):
             raise ValueError('Música requiere archivo local y rights_declared:true.')
         music['volume'] = bounded(music.get('volume', .10), 0, .3, 'music.volume')
         music['ducking'] = bounded(music.get('ducking', .35), 0, 1, 'music.ducking')
-    return dict(engine=engine, template=template, music=music,
+    return dict(engine=engine, template=template, music=music, captions=captions,
                 duration_seconds=value.get('duration_seconds'))
 
 
@@ -82,14 +83,31 @@ def frame(seconds, fps):
     return int(math.floor(seconds * fps + .5))
 
 
+def merge_speech_windows(windows, gap=.45):
+    """Keep music ducked through short intra-sentence pauses."""
+    merged = []
+    for a, b in sorted(windows):
+        if merged and a <= merged[-1][1] + gap:
+            merged[-1][1] = max(merged[-1][1], b)
+        else:
+            merged.append([a, b])
+    return merged
+
+
 def runtime():
     node = shutil.which('node')
     cli = ROOT / 'node_modules/@remotion/cli/remotion-cli.js'
     if not node or not cli.is_file():
         raise RuntimeError('Remotion no instalado. Ejecuta instalar_remotion.bat o usa --engine ffmpeg.')
-    browsers = list((ROOT / 'node_modules/.remotion').glob('**/chrome-headless-shell.exe')) if os.name == 'nt' else list((ROOT / 'node_modules/.remotion').glob('**/chrome-headless-shell'))
+    configured = os.environ.get('DENTFLOW_CHROME_PATH')
+    browsers = [Path(configured)] if configured else list((ROOT / 'node_modules/.remotion').glob(
+        '**/chrome-headless-shell.exe' if os.name == 'nt' else '**/chrome-headless-shell'))
+    browsers = [path for path in browsers if path.is_file()]
     if not browsers:
         raise RuntimeError('Falta Chromium local. Ejecuta instalar_remotion.bat con conexión; luego render offline.')
+    check = subprocess.run([str(browsers[0]), '--version'], capture_output=True, timeout=15)
+    if check.returncode:
+        raise RuntimeError('Chromium instalado no responde; reinstala con instalar_remotion.bat.')
     return node, cli, browsers[0]
 
 
@@ -126,7 +144,7 @@ def build_props(plan, options, job_id, base_video, assets, music=None):
                 captions=[dict(text=c['text'], startMs=c['start']*1000, endMs=c['end']*1000,
                                timestampMs=None, confidence=None) for c in plan['captions']],
                 subtitle_style=dict(font_size=subs['font_size'], margin_v=subs['margin_v']),
-                speech_windows=plan.get('speech_windows', []), music=music,
+                speech_windows=merge_speech_windows(plan.get('speech_windows', [])), music=music,
                 metadata=dict(source_sha256=plan['sha256'], source_type=plan.get('source_type', 'recording')))
 
 

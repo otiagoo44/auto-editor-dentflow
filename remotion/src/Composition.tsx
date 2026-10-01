@@ -30,9 +30,10 @@ export const DentFlow=(p:Props)=>{
       <Captions captions={p.captions} fontSize={p.subtitle_style.font_size} margin={p.subtitle_style.margin_v}/>
       {p.music&&<Audio src={staticFile(p.music.path)} volume={f=>{
         const seconds=f/fps;
-        const speech=p.speech_windows.some(([a,b])=>seconds>=a-.15&&seconds<=b+.25);
+        const speech=p.speech_windows.reduce((level,[a,b])=>Math.max(level,
+          Math.max(0,Math.min(1,(seconds-(a-.2))/.2,((b+.35)-seconds)/.35))),0);
         const fade=Math.max(0,Math.min(1,f/fps,(p.duration_frames-1-f)/fps));
-        return p.music!.volume*(speech?p.music!.ducking:1)*fade;
+        return p.music!.volume*(1-speech*(1-p.music!.ducking))*fade;
       }}/>}
     </div>
   </AbsoluteFill>;

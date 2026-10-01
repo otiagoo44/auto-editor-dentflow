@@ -14,6 +14,13 @@ from test_v2 import config,fixture,center_pixel
 
 
 class MotionContractTests(unittest.TestCase):
+    def test_captions_have_one_renderer_and_ducking_joins_words(self):
+        self.assertEqual(m.render_options({'render': {'engine':'remotion'}})['captions'], 'remotion')
+        for engine, captions in [('remotion','ass'), ('ffmpeg','remotion')]:
+            with self.assertRaisesRegex(ValueError, 'requiere captions'):
+                m.render_options({'render':dict(engine=engine, captions=captions)})
+        self.assertEqual(m.merge_speech_windows([[0,1],[1.1,2],[3,4]]), [[0,2],[3,4]])
+
     def test_render_options_and_music_rights(self):
         self.assertEqual(m.render_options({})['engine'],'ffmpeg')
         self.assertEqual(m.render_options({'render':{'engine':'remotion'}},'ffmpeg')['engine'],'ffmpeg')

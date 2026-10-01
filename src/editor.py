@@ -21,6 +21,12 @@ from planning import asset_path, bounded, policies, region, resolve_beats
 ROOT = Path(__file__).resolve().parents[1]
 VIDEO_EXTS = {".mp4", ".mov", ".m4v", ".webm", ".mkv"}
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp"}
+PROGRESS_JSON = False
+
+
+def progress(phase):
+    if PROGRESS_JSON:
+        print('DENTFLOW_PROGRESS ' + json.dumps({'phase': phase}), flush=True)
 
 # Winget actualiza el PATH de usuario, pero una terminal ya abierta no lo hereda.
 if sys.platform == "win32":
@@ -36,7 +42,7 @@ if sys.platform == "win32":
 
 def run(cmd, cwd=None):
     result = subprocess.run([str(x) for x in cmd], cwd=cwd, capture_output=True, text=True,
-                            encoding="utf-8", errors="replace")
+                            encoding="utf-8", errors="replace", timeout=3600)
     if result.returncode:
         raise RuntimeError(f"{cmd[0]} falló ({result.returncode}):\n{result.stderr[-5000:]}")
     return result.stdout
@@ -595,6 +601,7 @@ def process_reel(folder, cfg, plan_only=False, preview=False, auto=False, engine
 
 
 def _process_reel(folder, cfg, plan_only, preview, auto, run_dir, engine=None):
+    progress('probing')
     started = time.monotonic()
     cfg = copy.deepcopy(cfg)
     # Ningún render descarga modelos: la instalación es la única etapa con red.
@@ -606,7 +613,14 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir, engine=None):
     policies(spec, cfg)
     import motion
     options = motion.render_options(spec, engine)
-    graphic_only = options['template']=='comercial' and not spec.get('source')
+    source_mode = spec.get('source_mode')
+    if source_mode not in (None, 'recording', 'graphics'):
+        raise ValueError('source_mode: recording|graphics.')
+    if source_mode == 'recording' and not spec.get('source'):
+        raise ValueError('source_mode=recording requiere source explícita.')
+    if source_mode == 'graphics' and (spec.get('source') or options['template'] != 'comercial'):
+        raise ValueError('source_mode=graphics requiere comercial sin source.')
+    graphic_only = source_mode == 'graphics' or (source_mode is None and options['template']=='comercial' and not spec.get('source'))
     if options['engine']=='remotion' and not plan_only:
         motion.runtime()  # Error accionable antes de ASR/cortes y sin descargas implícitas.
     if graphic_only:
@@ -634,6 +648,7 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir, engine=None):
         warnings.append('cut_policy.mode=preserve: autocortes desactivados incluso con --auto; decisión editorial del Reel.')
     if not graphic_only and (folder/'transcript.json').exists():
         validate_transcript_identity(read_json(folder/'transcript.json'), digest, duration)
+    progress('transcribing')
     audio = audio_analysis(source, duration)
     if not audio["audible"]:
         words, transcript_source = [], "Sin audio audible; ASR omitida"
@@ -651,6 +666,7 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir, engine=None):
             warnings.append("Pico fuente cercano a 0 dBFS: posible clipping, escuchar. Normalizar no repara distorsión.")
         if audio["mean_db"] is not None and audio["mean_db"] < -35:
             warnings.append("Audio fuente tenue: revisar micrófono y ruido antes de publicar.")
+    progress('planning')
     fps = cfg["video"]["fps"]
     suggested = validate_ranges(build_keep_segments(words, duration, cfg), duration, fps)
     automatic = auto or spec.get("mode") == "auto"
@@ -773,13 +789,16 @@ def _process_reel(folder, cfg, plan_only, preview, auto, run_dir, engine=None):
         return run_dir
     with tempfile.TemporaryDirectory(prefix="dentflow_render_") as td:
         temp = Path(td)
+        progress('cutting')
         cut = render_cut_video(source, keep, temp, cfg)
+        progress('rendering')
         partial = run_dir / "render.partial.mp4"
         if options['engine']=='remotion':
             motion.render(cut, partial, plan, spec, options, folder, run_dir, sys.modules[__name__])
         else:
             shutil.copyfile(run_dir / 'subtitulos.ass', temp / 'subtitulos.ass')
             render_final(cut, temp / "subtitulos.ass", events, partial, cfg, temp, offset)
+        progress('qa')
         rendered = probe(partial)
         measured = float(rendered["format"]["duration"])
         if abs(measured - offset) > max(.15, 2 / fps):
@@ -917,6 +936,7 @@ def previous_outputs(folder):
 
 
 def main():
+    global PROGRESS_JSON
     if len(sys.argv) > 1 and sys.argv[1] == "--asr-worker":
         transcribe_worker(Path(sys.argv[2]), Path(sys.argv[3]), read_json(Path(sys.argv[4])))
         return
@@ -926,6 +946,7 @@ def main():
     ap.add_argument("--week", action="store_true")
     ap.add_argument("--plan-only", action="store_true")
     ap.add_argument("--preview", action="store_true")
+    ap.add_argument('--progress-json', action='store_true', help='Eventos de fase para Studio, sin porcentajes inventados.')
     ap.add_argument('--engine', choices=['ffmpeg','remotion'], default=None, help='Sobrescribe render.engine del plan; FFmpeg por defecto.')
     ap.add_argument("--auto", action="store_true", help="Cortes conservadores corroborados por silencio; sin assets inventados.")
     ap.add_argument("--no-auto-cuts", action="store_true", help="Conserva pausas; keep_segments explícitos tienen prioridad.")
@@ -933,6 +954,7 @@ def main():
     ap.add_argument("--warmup", action="store_true", help="Descarga inicial explicita del modelo; luego usar offline.")
     ap.add_argument('--migrate-transcript', metavar='SHA256', help='Vincula transcript legado revisado; conserva respaldo, exige SHA actual explícito.')
     args = ap.parse_args()
+    PROGRESS_JSON = args.progress_json
     if args.warmup:
         import numpy as np
         from faster_whisper import WhisperModel

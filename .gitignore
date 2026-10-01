@@ -26,3 +26,15 @@ node_modules/
 remotion/public/jobs/
 remotion/.cache/
 remotion/build/
+.next/
+web/out/
+*.tsbuildinfo
+.studio/
+worker/.state/
+*.sqlite*
+*.db
+*.m4a
+*.ogg
+web/test-results/
+web/playwright-report/
+web/.env.local

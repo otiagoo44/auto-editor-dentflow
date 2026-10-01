@@ -20,9 +20,9 @@ export const SceneFrame:React.FC<{scene:Scene;children?:React.ReactNode}>=({scen
       <div style={{position:'absolute',left:84,top:145,fontSize:32,letterSpacing:3,fontWeight:700,color:light?'#366EAB':palette.muted}}>DENTFLOW <span style={{color:palette.blue}}> / </span> {scene.params.eyebrow||'UNA IDEA, UN SIGUIENTE PASO'}</div>
     </>}
     <div style={{position:'absolute',left:84,right:100,top:full?286:240}}>
-      {scene.params.title&&<Reveal><div style={{fontSize:scene.params.title.length>62?76:88,fontWeight:750,lineHeight:1.08,letterSpacing:-2.5,
+      {scene.params.title&&<Reveal><div style={{fontSize:scene.params.title.length>62?62:78,fontWeight:750,lineHeight:1.08,letterSpacing:-1.5,overflowWrap:'anywhere',
         background:full?'transparent':'rgba(7,22,41,.94)',borderRadius:22,padding:full?0:'30px 36px',whiteSpace:'pre-line'}}>{scene.params.title}</div></Reveal>}
-      {full&&scene.params.subtitle&&<Reveal><div style={{fontSize:44,lineHeight:1.3,color:light?'#48637C':palette.muted,marginTop:28}}>{scene.params.subtitle}</div></Reveal>}
+      {full&&scene.params.subtitle&&<Reveal><div style={{fontSize:34,lineHeight:1.25,color:light?'#48637C':palette.muted,marginTop:24}}>{scene.params.subtitle}</div></Reveal>}
     </div>
     {children}
     {scene.demo&&<div style={{position:'absolute',left:84,right:84,top:1330,fontSize:32,fontWeight:650,color:light?'#365673':'#C8DDEF',
